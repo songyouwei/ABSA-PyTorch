@@ -18,14 +18,14 @@ batch_size = 128
 learning_rate = 0.001
 
 model_name = 'lstm'
-dataset = 'twitter'
+dataset = 'twitter'  # twitter / restaurant / laptop
 inputs_cols = ['text_raw_indices']
 log_step = 10
 
 
-class lstm(nn.Module):
+class LSTM(nn.Module):
     def __init__(self, embedding_matrix):
-        super(lstm, self).__init__()
+        super(LSTM, self).__init__()
         self.embed = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix, dtype=torch.float))
         self.lstm = nn.LSTM(embed_dim, hidden_dim, lstm_layers, batch_first=True)
         self.dense = nn.Linear(hidden_dim, polarities_dim)
@@ -34,12 +34,12 @@ class lstm(nn.Module):
         text_raw_indices = inputs[0]
         x = self.embed(text_raw_indices)
         _, (h_n, c_n) = self.lstm(x)
-        out = self.dense(h_n)
+        out = self.dense(h_n[0])
         return out
 
 
 if __name__ == '__main__':
-    ins = instructor(module_class=lstm, model_name=model_name,
+    ins = instructor(module_class=LSTM, model_name=model_name,
                      dataset=dataset, embed_dim=embed_dim, max_seq_len=max_seq_len,
                      batch_size=batch_size)
     ins.run(inputs_cols=inputs_cols,

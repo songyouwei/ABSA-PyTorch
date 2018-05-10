@@ -22,7 +22,8 @@ class instructor:
     def run(self, inputs_cols, learning_rate=0.001, num_epochs=20, log_step=5):
         # Loss and Optimizer
         criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=learning_rate)
+        params = filter(lambda p: p.requires_grad, self.model.parameters())
+        optimizer = torch.optim.Adam(params, lr=learning_rate)
 
         max_test_acc = 0
         global_step = 0
@@ -39,7 +40,7 @@ class instructor:
 
                 inputs = [sample_batched[col] for col in inputs_cols]
                 targets = sample_batched['polarity']
-                outputs = self.model(inputs)[0]
+                outputs = self.model(inputs)
 
                 loss = criterion(outputs, targets)
                 loss.backward()
@@ -57,7 +58,7 @@ class instructor:
                         for t_batch, t_sample_batched in enumerate(self.test_data_loader):
                             t_inputs = [t_sample_batched[col] for col in inputs_cols]
                             t_targets = t_sample_batched['polarity']
-                            t_outputs = self.model(t_inputs)[0]
+                            t_outputs = self.model(t_inputs)
 
                             n_test_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()
                             n_test_total += len(t_outputs)

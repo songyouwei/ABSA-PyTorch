@@ -24,16 +24,16 @@ log_step = 10
 
 
 class MemNet(nn.Module):
-    # @staticmethod
-    # def locationed_memory(memory):
-    #     # here we just simply calculate the location vector in Model2's manner
-    #     n = memory.shape[1]
-    #     v = torch.ones(n)
-    #     for i in range(n):
-    #         v[i] -= i / int(n)
-    #     v = v.unsqueeze(dim=-1)
-    #     locationed_mem = torch.mul(memory, v)
-    #     return locationed_mem
+    @staticmethod
+    def locationed_memory(memory, text_raw_without_aspect_indices):
+        # here we just simply calculate the location vector in Model2's manner
+        lens_memory = torch.tensor(torch.sum(text_raw_without_aspect_indices != 0, dim=-1), dtype=torch.int)
+        for i in range(memory.size(0)):
+            start = max_seq_len-int(lens_memory[i])
+            for j in range(lens_memory[i]):
+                idx = start+j
+                memory[i][idx] *= (1-float(j)/int(lens_memory[i]))
+        return memory
 
     def __init__(self, embedding_matrix):
         super(MemNet, self).__init__()
@@ -46,7 +46,7 @@ class MemNet(nn.Module):
         text_raw_without_aspect_indices, aspect_indices = inputs[0], inputs[1]
         nonzeros_aspect = torch.tensor(torch.sum(aspect_indices != 0, dim=-1), dtype=torch.float)
         memory = self.embed(text_raw_without_aspect_indices)
-        # memory = MemNet.locationed_memory(memory)
+        memory = MemNet.locationed_memory(memory, text_raw_without_aspect_indices)
         aspect = self.embed(aspect_indices)
         aspect = torch.sum(aspect, dim=1)
         aspect = torch.div(aspect, nonzeros_aspect.view(nonzeros_aspect.size(0), 1))

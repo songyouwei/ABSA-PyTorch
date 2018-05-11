@@ -32,6 +32,8 @@ class Attention(nn.Module):
         k, q = inputs
         if len(q.shape) == 2:
             q = torch.unsqueeze(q, dim=1)
+        if len(k.shape) == 2:
+            k = torch.unsqueeze(k, dim=1)
         # k: (?, K_LEN, EMBED_DIM,)
         # q: (?, Q_LEN, EMBED_DIM,)
         # score: (?, Q_LEN, K_LEN,)

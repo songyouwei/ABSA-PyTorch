@@ -87,7 +87,7 @@ class Tokenizer(object):
         return np.asarray(sequences)
 
 
-class absa_dataset(Dataset):
+class ABSADataset(Dataset):
     def __init__(self, data):
         self.data = data
 
@@ -98,7 +98,7 @@ class absa_dataset(Dataset):
         return len(self.data)
 
 
-class absa_dataset_reader:
+class ABSADatesetReader:
     @staticmethod
     def __read_text__(fname):
         fin = open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
@@ -163,9 +163,9 @@ class absa_dataset_reader:
                 'test': './datasets/semeval14/Laptops_Test_Gold.xml.seg'
             }
         }
-        text = absa_dataset_reader.__read_text__(fname[dataset]['train'])
+        text = ABSADatesetReader.__read_text__(fname[dataset]['train'])
         tokenizer = Tokenizer(max_seq_len=max_seq_len)
         tokenizer.fit_on_text(text.lower())
         self.embedding_matrix = build_embedding_matrix(tokenizer.word2idx, embed_dim, dataset)
-        self.train_data = absa_dataset(absa_dataset_reader.__read_data__(fname[dataset]['train'], tokenizer))
-        self.test_data = absa_dataset(absa_dataset_reader.__read_data__(fname[dataset]['test'], tokenizer))
+        self.train_data = ABSADataset(ABSADatesetReader.__read_data__(fname[dataset]['train'], tokenizer))
+        self.test_data = ABSADataset(ABSADatesetReader.__read_data__(fname[dataset]['test'], tokenizer))

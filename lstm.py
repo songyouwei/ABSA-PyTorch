@@ -3,7 +3,7 @@
 # author: songyouwei <youwei0314@gmail.com>
 # Copyright (C) 2018. All Rights Reserved.
 
-from helpers import instructor
+from train_utils import Instructor
 import torch
 import torch.nn as nn
 
@@ -39,7 +39,7 @@ class LSTM(nn.Module):
 
 
 if __name__ == '__main__':
-    ins = instructor(module_class=LSTM, model_name=model_name,
+    ins = Instructor(module_class=LSTM, model_name=model_name,
                      dataset=dataset, embed_dim=embed_dim, max_seq_len=max_seq_len,
                      batch_size=batch_size)
     ins.run(inputs_cols=inputs_cols,

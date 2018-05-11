@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-# file: helpers.py
+# file: train_utils.py
 # author: songyouwei <youwei0314@gmail.com>
 # Copyright (C) 2018. All Rights Reserved.
 
-from data_utils import absa_dataset_reader
+from data_utils import ABSADatesetReader
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -12,9 +12,9 @@ from tensorboardX import SummaryWriter
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-class instructor:
+class Instructor:
     def __init__(self, module_class, model_name, dataset='twitter', embed_dim=100, max_seq_len=40, batch_size=128):
-        absa_dataset = absa_dataset_reader(dataset=dataset, embed_dim=embed_dim, max_seq_len=max_seq_len)
+        absa_dataset = ABSADatesetReader(dataset=dataset, embed_dim=embed_dim, max_seq_len=max_seq_len)
         self.train_data_loader = DataLoader(dataset=absa_dataset.train_data, batch_size=batch_size, shuffle=True)
         self.test_data_loader = DataLoader(dataset=absa_dataset.test_data, batch_size=len(absa_dataset.test_data), shuffle=False)
         self.writer = SummaryWriter(log_dir='{0}_logs'.format(model_name))

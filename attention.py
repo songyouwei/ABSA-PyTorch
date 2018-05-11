@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 
 class Attention(nn.Module):
-    def __init__(self, embed_dim, k_len, q_len, score_function='scaled_dot_product'):
+    def __init__(self, embed_dim, score_function='scaled_dot_product'):
         # score_function: scaled_dot_product / mlp (concat) / bi_linear (general dot)
         super(Attention, self).__init__()
         self.embed_dim = embed_dim

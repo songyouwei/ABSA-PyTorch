@@ -22,6 +22,7 @@ model_name = 'ian'
 dataset = 'twitter'  # twitter / restaurant / laptop
 inputs_cols = ['text_raw_indices', 'aspect_indices']
 log_step = 10
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 class IAN(nn.Module):
@@ -40,13 +41,13 @@ class IAN(nn.Module):
         aspect = self.embed(aspect_indices)
         aspect, (_, _) = self.lstm(aspect)
 
-        nonzeros_aspect = torch.tensor(torch.sum(aspect_indices != 0, dim=-1), dtype=torch.float)
+        nonzeros_aspect = torch.tensor(torch.sum(aspect_indices != 0, dim=-1), dtype=torch.float).to(device)
         aspect = torch.sum(aspect, dim=1)
         aspect = torch.div(aspect, nonzeros_aspect.view(nonzeros_aspect.size(0), 1))
 
-        nonzeros_context = torch.tensor(torch.sum(text_raw_indices != 0, dim=-1), dtype=torch.float)
+        nonzeros_context = torch.tensor(torch.sum(text_raw_indices != 0, dim=-1), dtype=torch.float).to(device)
         context = torch.sum(context, dim=1)
-        context = torch.div(context, text_raw_indices.view(nonzeros_context.size(0), 1))
+        context = torch.div(context, nonzeros_context.view(nonzeros_context.size(0), 1))
 
         aspect_final = self.attention_aspect((aspect, context)).squeeze(dim=1)
         context_final = self.attention_context((context, aspect)).squeeze(dim=1)

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# file: train_helper.py
+# file: helpers.py
 # author: songyouwei <youwei0314@gmail.com>
 # Copyright (C) 2018. All Rights Reserved.
 
@@ -9,6 +9,8 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 
 class instructor:
     def __init__(self, module_class, model_name, dataset='twitter', embed_dim=100, max_seq_len=40, batch_size=128):
@@ -17,7 +19,7 @@ class instructor:
         self.test_data_loader = DataLoader(dataset=absa_dataset.test_data, batch_size=len(absa_dataset.test_data), shuffle=False)
         self.writer = SummaryWriter(log_dir='{0}_logs'.format(model_name))
 
-        self.model = module_class(absa_dataset.embedding_matrix)
+        self.model = module_class(absa_dataset.embedding_matrix).to(device)
 
     def run(self, inputs_cols, learning_rate=0.001, num_epochs=20, log_step=5):
         # Loss and Optimizer
@@ -38,8 +40,8 @@ class instructor:
                 self.model.train()
                 optimizer.zero_grad()
 
-                inputs = [sample_batched[col] for col in inputs_cols]
-                targets = sample_batched['polarity']
+                inputs = [sample_batched[col].to(device) for col in inputs_cols]
+                targets = sample_batched['polarity'].to(device)
                 outputs = self.model(inputs)
 
                 loss = criterion(outputs, targets)
@@ -56,8 +58,8 @@ class instructor:
                     n_test_correct, n_test_total = 0, 0
                     with torch.no_grad():
                         for t_batch, t_sample_batched in enumerate(self.test_data_loader):
-                            t_inputs = [t_sample_batched[col] for col in inputs_cols]
-                            t_targets = t_sample_batched['polarity']
+                            t_inputs = [t_sample_batched[col].to(device) for col in inputs_cols]
+                            t_targets = t_sample_batched['polarity'].to(device)
                             t_outputs = self.model(t_inputs)
 
                             n_test_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()

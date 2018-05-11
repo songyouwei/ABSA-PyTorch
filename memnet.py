@@ -21,13 +21,14 @@ model_name = 'memnet'
 dataset = 'twitter'  # twitter / restaurant / laptop
 inputs_cols = ['text_raw_without_aspect_indices', 'aspect_indices']
 log_step = 10
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
 class MemNet(nn.Module):
     @staticmethod
     def locationed_memory(memory, text_raw_without_aspect_indices):
         # here we just simply calculate the location vector in Model2's manner
-        lens_memory = torch.tensor(torch.sum(text_raw_without_aspect_indices != 0, dim=-1), dtype=torch.int)
+        lens_memory = torch.tensor(torch.sum(text_raw_without_aspect_indices != 0, dim=-1), dtype=torch.int).to(device)
         for i in range(memory.size(0)):
             start = max_seq_len-int(lens_memory[i])
             for j in range(lens_memory[i]):
@@ -44,7 +45,7 @@ class MemNet(nn.Module):
 
     def forward(self, inputs):
         text_raw_without_aspect_indices, aspect_indices = inputs[0], inputs[1]
-        nonzeros_aspect = torch.tensor(torch.sum(aspect_indices != 0, dim=-1), dtype=torch.float)
+        nonzeros_aspect = torch.tensor(torch.sum(aspect_indices != 0, dim=-1), dtype=torch.float).to(device)
         memory = self.embed(text_raw_without_aspect_indices)
         # memory = MemNet.locationed_memory(memory, text_raw_without_aspect_indices)
         aspect = self.embed(aspect_indices)

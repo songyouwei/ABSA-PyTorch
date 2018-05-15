@@ -4,6 +4,7 @@
 # Copyright (C) 2018. All Rights Reserved.
 
 from train_utils import Instructor
+from dynamic_rnn import DynamicLSTM
 import torch
 import torch.nn as nn
 
@@ -27,15 +28,16 @@ class TD_LSTM(nn.Module):
     def __init__(self, embedding_matrix):
         super(TD_LSTM, self).__init__()
         self.embed = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix, dtype=torch.float))
-        self.lstm_l = nn.LSTM(embed_dim, hidden_dim, lstm_layers, batch_first=True)
-        self.lstm_r = nn.LSTM(embed_dim, hidden_dim, lstm_layers, batch_first=True)
+        self.lstm_l = DynamicLSTM(embed_dim, hidden_dim, lstm_layers, batch_first=True)
+        self.lstm_r = DynamicLSTM(embed_dim, hidden_dim, lstm_layers, batch_first=True)
         self.dense = nn.Linear(hidden_dim*2, polarities_dim)
 
     def forward(self, inputs):
         x_l, x_r = inputs[0], inputs[1]
+        x_l_len, x_r_len = torch.sum(x_l != 0, dim=-1), torch.sum(x_r != 0, dim=-1)
         x_l, x_r = self.embed(x_l), self.embed(x_r)
-        _, (h_n_l, c_n_l) = self.lstm_l(x_l)
-        _, (h_n_r, c_n_r) = self.lstm_r(x_r)
+        _, (h_n_l, _) = self.lstm_l(x_l, x_l_len)
+        _, (h_n_r, _) = self.lstm_r(x_r, x_r_len)
         h_n = torch.cat((h_n_l[0], h_n_r[0]), dim=-1)
         out = self.dense(h_n)
         return out

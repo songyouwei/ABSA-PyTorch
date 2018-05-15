@@ -4,6 +4,7 @@
 # Copyright (C) 2018. All Rights Reserved.
 
 from train_utils import Instructor
+from dynamic_rnn import DynamicLSTM
 from attention import Attention
 import torch
 import torch.nn as nn
@@ -20,7 +21,7 @@ batch_size = 128
 learning_rate = 0.001
 
 model_name = 'ram'
-dataset = 'twitter'  # twitter / restaurant / laptop
+dataset = 'restaurant'  # twitter / restaurant / laptop
 inputs_cols = ['text_raw_indices', 'aspect_indices']
 log_step = 10
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -41,19 +42,23 @@ class RAM(nn.Module):
     def __init__(self, embedding_matrix):
         super(RAM, self).__init__()
         self.embed = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix, dtype=torch.float))
-        self.bi_lstm = nn.LSTM(embed_dim, hidden_dim, lstm_layers, batch_first=True, bidirectional=True)
+        self.bi_lstm_context = DynamicLSTM(embed_dim, hidden_dim, lstm_layers, batch_first=True, bidirectional=True)
+        self.bi_lstm_aspect = DynamicLSTM(embed_dim, hidden_dim, lstm_layers, batch_first=True, bidirectional=True)
         self.attention = Attention(hidden_dim*2, score_function='mlp')
         self.gru_cell = nn.GRUCell(hidden_dim*2, hidden_dim*2)
         self.dense = nn.Linear(hidden_dim*2, polarities_dim)
 
     def forward(self, inputs):
         text_raw_without_aspect_indices, aspect_indices = inputs[0], inputs[1]
-        nonzeros_aspect = torch.tensor(torch.sum(aspect_indices != 0, dim=-1), dtype=torch.float).to(device)
+        context_len = torch.sum(text_raw_without_aspect_indices != 0, dim=-1)
+        aspect_len = torch.sum(aspect_indices != 0, dim=-1)
+        nonzeros_aspect = torch.tensor(aspect_len, dtype=torch.float).to(device)
+
         memory = self.embed(text_raw_without_aspect_indices)
-        memory, (_, _) = self.bi_lstm(memory)
+        memory, (_, _) = self.bi_lstm_context(memory, context_len)
         # memory = RAM.locationed_memory(memory, text_raw_without_aspect_indices)
         aspect = self.embed(aspect_indices)
-        aspect, (_, _) = self.bi_lstm(aspect)
+        aspect, (_, _) = self.bi_lstm_aspect(aspect, aspect_len)
         aspect = torch.sum(aspect, dim=1)
         aspect = torch.div(aspect, nonzeros_aspect.view(nonzeros_aspect.size(0), 1))
 

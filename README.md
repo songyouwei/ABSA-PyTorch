@@ -39,7 +39,7 @@ Chen, Peng, et al. "Recurrent Attention Network on Memory for Aspect Sentiment A
 
 
 ### MemNet ([memnet.py](./memnet.py))
-Tang, Duyu, Bing Qin, and Ting Liu. "Aspect level sentiment classification with deep memory network." arXiv preprint arXiv:1605.08900 (2016). [[pdf]](https://arxiv.org/pdf/1605.08900)
+Tang, Duyu, B. Qin, and T. Liu. "Aspect Level Sentiment Classification with Deep Memory Network." Conference on Empirical Methods in Natural Language Processing 2016:214-224. [[pdf]](https://arxiv.org/pdf/1605.08900)
 
 ![memnet](assets/memnet.png)
 

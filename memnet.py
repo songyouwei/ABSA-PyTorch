@@ -4,6 +4,7 @@
 # Copyright (C) 2018. All Rights Reserved.
 
 from train_utils import Instructor
+from dynamic_rnn import DynamicLSTM
 from attention import Attention
 import torch
 import torch.nn as nn
@@ -11,7 +12,7 @@ import torch.nn as nn
 # Hyper Parameters
 hops = 7
 embed_dim = 300
-max_seq_len = 80
+max_seq_len = 40
 polarities_dim = 3
 num_epochs = 50
 batch_size = 128

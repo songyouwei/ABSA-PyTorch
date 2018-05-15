@@ -26,7 +26,7 @@ def build_embedding_matrix(word2idx, embed_dim, type):
         embedding_matrix = pickle.load(open(embedding_matrix_file_name, 'rb'))
     else:
         print('loading word vectors...')
-        embedding_matrix = np.zeros((len(word2idx) + 1, embed_dim))
+        embedding_matrix = np.zeros((len(word2idx) + 2, embed_dim))  # idx 0 and len(word2idx)+1 are all-zeros
         fname = './glove.twitter.27B/glove.twitter.27B.' + str(embed_dim) + 'd.txt' \
             if embed_dim != 300 else './glove.42B.300d.txt'
         word_vec = load_word_vec(fname, word2idx=word2idx)
@@ -73,18 +73,18 @@ class Tokenizer(object):
             x[-len(trunc):] = trunc
         return x
 
-    def text_to_sequence(self, text, pad_and_trunc='pre'):
+    def text_to_sequence(self, text, reverse=False):
         if self.lower:
             text = text.lower()
         words = text.split()
-        sequence = [self.word2idx[w] if w in self.word2idx else 0 for w in words]
+        unknownidx = len(self.word2idx)+1
+        sequence = [self.word2idx[w] if w in self.word2idx else unknownidx for w in words]
         if len(sequence) == 0:
             sequence = [0]
+        pad_and_trunc = 'post'  # use post padding together with torch.nn.utils.rnn.pack_padded_sequence
+        if reverse:
+            sequence = sequence[::-1]
         return Tokenizer.pad_sequence(sequence, self.max_seq_len, dtype='int64', padding=pad_and_trunc, truncating=pad_and_trunc)
-
-    def texts_to_sequences(self, texts):
-        sequences = [self.text_to_sequence(text) for text in texts]
-        return np.asarray(sequences)
 
 
 class ABSADataset(Dataset):
@@ -128,8 +128,8 @@ class ABSADatesetReader:
             text_raw_without_aspect_indices = tokenizer.text_to_sequence(text_left + " " + text_right)
             text_left_indices = tokenizer.text_to_sequence(text_left)
             text_left_with_aspect_indices = tokenizer.text_to_sequence(text_left + " " + aspect)
-            text_right_indices = tokenizer.text_to_sequence(text_right, pad_and_trunc='post')
-            text_right_with_aspect_indices = tokenizer.text_to_sequence(" " + aspect + " " + text_right, pad_and_trunc='post')
+            text_right_indices = tokenizer.text_to_sequence(text_right, reverse=True)
+            text_right_with_aspect_indices = tokenizer.text_to_sequence(" " + aspect + " " + text_right, reverse=True)
             aspect_indices = tokenizer.text_to_sequence(aspect)
             polarity = int(polarity)+1
 

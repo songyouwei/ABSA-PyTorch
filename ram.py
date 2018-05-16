@@ -64,7 +64,7 @@ class RAM(nn.Module):
 
         et = aspect
         for _ in range(hops):
-            it_al = self.attention((memory, et)).squeeze(dim=1)
+            it_al = self.attention(memory, et).squeeze(dim=1)
             et = self.gru_cell(it_al, et)
         out = self.dense(et)
         return out

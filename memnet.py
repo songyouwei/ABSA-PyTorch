@@ -55,7 +55,7 @@ class MemNet(nn.Module):
         x = aspect.unsqueeze(dim=1)
         for _ in range(hops):
             x = self.x_linear(x)
-            out_at = self.attention((memory, x))
+            out_at = self.attention(memory, x)
             x = out_at + x
         x = x.view(x.size(0), -1)
         out = self.dense(x)

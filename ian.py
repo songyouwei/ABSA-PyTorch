@@ -54,8 +54,8 @@ class IAN(nn.Module):
         context = torch.sum(context, dim=1)
         context = torch.div(context, text_raw_len.view(text_raw_len.size(0), 1))
 
-        aspect_final = self.attention_aspect((aspect, context)).squeeze(dim=1)
-        context_final = self.attention_context((context, aspect)).squeeze(dim=1)
+        aspect_final = self.attention_aspect(aspect, context).squeeze(dim=1)
+        context_final = self.attention_context(context, aspect).squeeze(dim=1)
 
         x = torch.cat((aspect_final, context_final), dim=-1)
         out = self.dense(x)

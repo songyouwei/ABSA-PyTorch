@@ -15,6 +15,8 @@ class Attention(nn.Module):
         super(Attention, self).__init__()
         self.embed_dim = embed_dim
         self.score_function = score_function
+        self.linear_k = nn.Linear(embed_dim, embed_dim)
+        self.linear_q = nn.Linear(embed_dim, embed_dim)
         if score_function == 'mlp':
             self.weight = nn.Parameter(torch.Tensor(embed_dim*2, 1))
         elif self.score_function == 'bi_linear':
@@ -27,24 +29,25 @@ class Attention(nn.Module):
         for weight in self.parameters():
             nn.init.xavier_uniform_(weight)
 
-    def forward(self, inputs):
-        # output = softmax(score)
-        k, q = inputs
-        if len(q.shape) == 2:
+    def forward(self, k, q):
+        if len(q.shape) == 2:  # q_len missing
             q = torch.unsqueeze(q, dim=1)
-        if len(k.shape) == 2:
+        if len(k.shape) == 2:  # k_len missing
             k = torch.unsqueeze(k, dim=1)
-        # k: (?, K_LEN, EMBED_DIM,)
-        # q: (?, Q_LEN, EMBED_DIM,)
-        # score: (?, Q_LEN, K_LEN,)
+        # k: (?, k_len, embed_dim,)
+        # q: (?, q_len, embed_dim,)
+        # score: (?, q_len, k_len,)
+        # output: (?, q_len, embed_dim,)
+        k = self.linear_k(k)
+        q = self.linear_q(q)
         if self.score_function == 'scaled_dot_product':
             kt = k.permute(0, 2, 1)
             qkt = torch.bmm(q, kt)
             score = torch.div(qkt, math.sqrt(self.embed_dim))
         elif self.score_function == 'mlp':
-            kx = torch.unsqueeze(k, dim=1).repeat(1, q.shape[1], 1, 1)
-            qx = torch.unsqueeze(q, dim=2).repeat(1, 1, k.shape[1], 1)
-            kq = torch.cat((kx, qx), dim=-1)  # (?, Q_LEN, K_LEN, EMBED_DIM*2)
+            kx = torch.unsqueeze(k, dim=1).expand(-1, q.shape[1], -1, -1)
+            qx = torch.unsqueeze(q, dim=2).expand(-1, -1, k.shape[1], -1)
+            kq = torch.cat((kx, qx), dim=-1)  # (?, q_len, k_len, embed_dim*2)
             score = F.tanh(torch.matmul(kq, self.weight).squeeze(dim=-1))
         elif self.score_function == 'bi_linear':
             qw = torch.matmul(q, self.weight)
@@ -53,6 +56,5 @@ class Attention(nn.Module):
         else:
             raise RuntimeError('invalid score_function')
         score = F.softmax(score, dim=-1)
-        # output: (?, Q_LEN, EMBED_DIM,)
         output = torch.bmm(score, k)
         return output

@@ -27,12 +27,6 @@ class Attention(nn.Module):
             self.weight = nn.Parameter(torch.Tensor(hidden_dim, hidden_dim))
         else:
             self.register_parameter('weight', None)
-        self.reset_parameters()
-
-    def reset_parameters(self):
-        for weight in self.parameters():
-            if len(weight.shape) > 1:
-                nn.init.xavier_uniform_(weight)
 
     def forward(self, k, q):
         if len(q.shape) == 2:  # q_len missing

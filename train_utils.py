@@ -20,6 +20,12 @@ class Instructor:
         self.writer = SummaryWriter(log_dir='{0}_logs'.format(model_name))
 
         self.model = module_class(absa_dataset.embedding_matrix).to(device)
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        for p in self.model.parameters():
+            if p.requires_grad and len(p.shape) > 1:
+                nn.init.xavier_uniform_(p)
 
     def run(self, inputs_cols, learning_rate=0.001, num_epochs=20, log_step=5):
         # Loss and Optimizer

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# file: dynamic_rnn
+# file: dynamic_rnn.py
 # author: songyouwei <youwei0314@gmail.com>
 # Copyright (C) 2018. All Rights Reserved.
 
@@ -69,8 +69,8 @@ class DynamicLSTM(nn.Module):
             """unpack: out"""
             out = torch.nn.utils.rnn.pad_packed_sequence(out_pack, batch_first=self.batch_first)  # (sequence, lengths)
             out = out[0]  #
-            """unsort: out c"""
             out = out[x_unsort_idx]
+            """unsort: out c"""
             ct = torch.transpose(ct, 0, 1)[
                 x_unsort_idx]  # (num_layers * num_directions, batch, hidden_size) -> (batch, ...)
             ct = torch.transpose(ct, 0, 1)

@@ -7,31 +7,35 @@ from layers.attention import Attention
 import torch
 import torch.nn as nn
 
+from layers.squeeze_embedding import SqueezeEmbedding
+
 
 class MemNet(nn.Module):
-    def locationed_memory(self, memory, text_raw_without_aspect_indices):
+    def locationed_memory(self, memory, memory_len):
         # here we just simply calculate the location vector in Model2's manner
-        lens_memory = torch.tensor(torch.sum(text_raw_without_aspect_indices != 0, dim=-1), dtype=torch.int).to(self.opt.device)
         for i in range(memory.size(0)):
-            start = self.opt.max_seq_len-int(lens_memory[i])
-            for j in range(lens_memory[i]):
-                idx = start+j
-                memory[i][idx] *= (1-float(j)/int(lens_memory[i]))
+            for idx in range(memory_len[i]):
+                memory[i][idx] *= (1-float(idx)/int(memory_len[i]))
         return memory
 
     def __init__(self, embedding_matrix, opt):
         super(MemNet, self).__init__()
         self.opt = opt
         self.embed = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix, dtype=torch.float))
+        self.squeeze_embedding = SqueezeEmbedding(batch_first=True)
         self.attention = Attention(opt.embed_dim, score_function='mlp')
         self.x_linear = nn.Linear(opt.embed_dim, opt.embed_dim)
         self.dense = nn.Linear(opt.embed_dim, opt.polarities_dim)
 
     def forward(self, inputs):
         text_raw_without_aspect_indices, aspect_indices = inputs[0], inputs[1]
-        nonzeros_aspect = torch.tensor(torch.sum(aspect_indices != 0, dim=-1), dtype=torch.float).to(self.opt.device)
+        memory_len = torch.sum(text_raw_without_aspect_indices != 0, dim=-1)
+        aspect_len = torch.sum(aspect_indices != 0, dim=-1)
+        nonzeros_aspect = torch.tensor(aspect_len, dtype=torch.float).to(self.opt.device)
+
         memory = self.embed(text_raw_without_aspect_indices)
-        # memory = self.locationed_memory(memory, text_raw_without_aspect_indices)
+        memory = self.squeeze_embedding(memory, memory_len)
+        # memory = self.locationed_memory(memory, memory_len)
         aspect = self.embed(aspect_indices)
         aspect = torch.sum(aspect, dim=1)
         aspect = torch.div(aspect, nonzeros_aspect.view(nonzeros_aspect.size(0), 1))

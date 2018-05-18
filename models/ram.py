@@ -10,15 +10,6 @@ import torch.nn as nn
 
 
 class RAM(nn.Module):
-    def locationed_memory(self, memory, text_raw_without_aspect_indices):
-        # here we just simply calculate the location vector in Model2's manner
-        lens_memory = torch.tensor(torch.sum(text_raw_without_aspect_indices != 0, dim=-1), dtype=torch.int).to(self.opt.device)
-        for i in range(memory.size(0)):
-            start = self.opt.max_seq_len-int(lens_memory[i])
-            for j in range(lens_memory[i]):
-                idx = start+j
-                memory[i][idx] *= (1-float(j)/int(lens_memory[i]))
-        return memory
 
     def __init__(self, embedding_matrix, opt):
         super(RAM, self).__init__()
@@ -38,7 +29,6 @@ class RAM(nn.Module):
 
         memory = self.embed(text_raw_without_aspect_indices)
         memory, (_, _) = self.bi_lstm_context(memory, context_len)
-        memory = self.locationed_memory(memory, text_raw_without_aspect_indices)
         aspect = self.embed(aspect_indices)
         aspect, (_, _) = self.bi_lstm_aspect(aspect, aspect_len)
         aspect = torch.sum(aspect, dim=1)

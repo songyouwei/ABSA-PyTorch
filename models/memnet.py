@@ -31,7 +31,7 @@ class MemNet(nn.Module):
         text_raw_without_aspect_indices, aspect_indices = inputs[0], inputs[1]
         nonzeros_aspect = torch.tensor(torch.sum(aspect_indices != 0, dim=-1), dtype=torch.float).to(self.opt.device)
         memory = self.embed(text_raw_without_aspect_indices)
-        memory = self.locationed_memory(memory, text_raw_without_aspect_indices)
+        # memory = self.locationed_memory(memory, text_raw_without_aspect_indices)
         aspect = self.embed(aspect_indices)
         aspect = torch.sum(aspect, dim=1)
         aspect = torch.div(aspect, nonzeros_aspect.view(nonzeros_aspect.size(0), 1))

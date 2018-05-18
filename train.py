@@ -32,9 +32,16 @@ class Instructor:
         self.reset_parameters()
 
     def reset_parameters(self):
+        n_trainable_params, n_nontrainable_params = 0, 0
         for p in self.model.parameters():
-            if p.requires_grad and len(p.shape) > 1:
-                nn.init.xavier_uniform_(p)
+            n_params = torch.prod(torch.tensor(p.shape))
+            if p.requires_grad:
+                n_trainable_params += n_params
+                if len(p.shape) > 1:
+                    nn.init.xavier_uniform_(p)
+            else:
+                n_nontrainable_params += n_params
+        print('n_trainable_params: {0}, n_nontrainable_params: {1}'.format(n_trainable_params, n_nontrainable_params))
 
     def run(self):
         # Loss and Optimizer

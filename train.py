@@ -19,6 +19,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Instructor:
     def __init__(self, opt):
+        self.opt = opt
         print('> training arguments:')
         for arg in vars(opt):
             print('>>> {0}: {1}'.format(arg, getattr(opt, arg)))
@@ -38,7 +39,7 @@ class Instructor:
             if p.requires_grad:
                 n_trainable_params += n_params
                 if len(p.shape) > 1:
-                    nn.init.xavier_uniform_(p)
+                    self.opt.initializer(p)
             else:
                 n_nontrainable_params += n_params
         print('n_trainable_params: {0}, n_nontrainable_params: {1}'.format(n_trainable_params, n_nontrainable_params))
@@ -47,11 +48,11 @@ class Instructor:
         # Loss and Optimizer
         criterion = nn.CrossEntropyLoss()
         params = filter(lambda p: p.requires_grad, self.model.parameters())
-        optimizer = opt.optimizer(params, lr=opt.learning_rate)
+        optimizer = self.opt.optimizer(params, lr=self.opt.learning_rate)
 
         max_test_acc = 0
         global_step = 0
-        for epoch in range(opt.num_epoch):
+        for epoch in range(self.opt.num_epoch):
             print('>' * 100)
             print('epoch: ', epoch)
             n_correct, n_total = 0, 0
@@ -62,7 +63,7 @@ class Instructor:
                 self.model.train()
                 optimizer.zero_grad()
 
-                inputs = [sample_batched[col].to(device) for col in opt.inputs_cols]
+                inputs = [sample_batched[col].to(device) for col in self.opt.inputs_cols]
                 targets = sample_batched['polarity'].to(device)
                 outputs = self.model(inputs)
 
@@ -70,7 +71,7 @@ class Instructor:
                 loss.backward()
                 optimizer.step()
 
-                if global_step % opt.log_step == 0:
+                if global_step % self.opt.log_step == 0:
                     n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
                     n_total += len(outputs)
                     train_acc = n_correct / n_total
@@ -80,7 +81,7 @@ class Instructor:
                     n_test_correct, n_test_total = 0, 0
                     with torch.no_grad():
                         for t_batch, t_sample_batched in enumerate(self.test_data_loader):
-                            t_inputs = [t_sample_batched[col].to(device) for col in opt.inputs_cols]
+                            t_inputs = [t_sample_batched[col].to(device) for col in self.opt.inputs_cols]
                             t_targets = t_sample_batched['polarity'].to(device)
                             t_outputs = self.model(t_inputs)
 

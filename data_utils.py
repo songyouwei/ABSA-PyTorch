@@ -15,7 +15,9 @@ def load_word_vec(path, word2idx=None):
     for line in fin:
         tokens = line.rstrip().split()
         if word2idx is None or tokens[0] in word2idx.keys():
-            word_vec[tokens[0]] = np.asarray(tokens[1:], dtype='float32')
+            try: word_vec[tokens[0]] = np.asarray(tokens[1:], dtype='float32')
+            except:  # to fix the error
+                word_vec[tokens[0]] = np.asarray(tokens[len(tokens) -300 :], dtype = 'float32')
     return word_vec
 
 

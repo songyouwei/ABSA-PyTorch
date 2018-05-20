@@ -11,11 +11,19 @@ from layers.squeeze_embedding import SqueezeEmbedding
 
 
 class MemNet(nn.Module):
-    def locationed_memory(self, memory, memory_len):
+    
+    def locationed_memory(self, memory, memory_len, left_len, aspect_len):
         # here we just simply calculate the location vector in Model2's manner
+        '''
+        Updated to calculate location as the absolute diference between context word and aspect
+        '''
         for i in range(memory.size(0)):
             for idx in range(memory_len[i]):
-                memory[i][idx] *= (1-float(idx)/int(memory_len[i]))
+                aspect_start = left_len[i] - aspect_len[i]
+                if idx < aspect_start: l = aspect_start.item() - idx                   # l = absolute distance to the aspect
+                else: l = idx +1 - aspect_start.item()
+                memory[i][idx] *= (1-float(l)/int(memory_len[i]))
+               
         return memory
 
     def __init__(self, embedding_matrix, opt):
@@ -28,14 +36,15 @@ class MemNet(nn.Module):
         self.dense = nn.Linear(opt.embed_dim, opt.polarities_dim)
 
     def forward(self, inputs):
-        text_raw_without_aspect_indices, aspect_indices = inputs[0], inputs[1]
+        text_raw_without_aspect_indices, aspect_indices, left_with_aspect_indices = inputs[0], inputs[1], inputs[2]
+        left_len = torch.sum(left_with_aspect_indices != 0, dim = -1)
         memory_len = torch.sum(text_raw_without_aspect_indices != 0, dim=-1)
         aspect_len = torch.sum(aspect_indices != 0, dim=-1)
         nonzeros_aspect = torch.tensor(aspect_len, dtype=torch.float).to(self.opt.device)
 
         memory = self.embed(text_raw_without_aspect_indices)
         memory = self.squeeze_embedding(memory, memory_len)
-        # memory = self.locationed_memory(memory, memory_len)
+        # memory = self.locationed_memory(memory, memory_len, left_len, aspect_len)
         aspect = self.embed(aspect_indices)
         aspect = torch.sum(aspect, dim=1)
         aspect = torch.div(aspect, nonzeros_aspect.view(nonzeros_aspect.size(0), 1))

@@ -133,7 +133,7 @@ if __name__ == '__main__':
         'lstm': ['text_raw_indices'],
         'td_lstm': ['text_left_with_aspect_indices', 'text_right_with_aspect_indices'],
         'ian': ['text_raw_indices', 'aspect_indices'],
-        'memnet': ['text_raw_without_aspect_indices', 'aspect_indices'],
+        'memnet': ['text_raw_without_aspect_indices', 'aspect_indices', 'text_left_with_aspect_indices'],
         'ram': ['text_raw_indices', 'aspect_indices'],
     }
     initializers = {

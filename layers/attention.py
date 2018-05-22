@@ -25,6 +25,9 @@ class Attention(nn.Module):
             self.weight = nn.Parameter(torch.Tensor(hidden_dim*2, 1))
         elif self.score_function == 'bi_linear':
             self.weight = nn.Parameter(torch.Tensor(hidden_dim, hidden_dim))
+        elif self.score_function == 'a':
+            self.weight = nn.Parameter(torch.Tensor(hidden_dim, 1))
+            self.b1 = nn.Parameter(torch.Tensor(hidden_dim))
         else:
             self.register_parameter('weight', None)
 
@@ -50,6 +53,7 @@ class Attention(nn.Module):
             kt = kx.permute(0, 2, 1)
             qkt = torch.bmm(qx, kt)
             score = torch.div(qkt, math.sqrt(self.hidden_dim))
+        # memnet: concatenates memory with aspect representation
         elif self.score_function == 'mlp':
             kxx = torch.unsqueeze(kx, dim=1).expand(-1, q_len, -1, -1)
             qxx = torch.unsqueeze(qx, dim=2).expand(-1, -1, k_len, -1)
@@ -59,6 +63,14 @@ class Attention(nn.Module):
             qw = torch.matmul(q, self.weight)
             kt = k.permute(0, 2, 1)
             score = torch.bmm(qw, kt)
+            
+        # base_a attention module: FwNN with 2 inputs
+        # W1 * tanh(W2 * memory representation + W3 * aspect representation + bias)                      
+        elif self.score_function == 'a':
+            kxx = torch.unsqueeze(kx, dim=1).expand(-1, q_len, -1, -1)
+            qxx = torch.unsqueeze(qx, dim=2).expand(-1, -1, k_len, -1)
+            kq = kxx +  qxx + self.b1                                                
+            score = torch.matmul(F.tanh(kq), self.weight).squeeze(dim=-1)     
         else:
             raise RuntimeError('invalid score_function')
         score = F.softmax(score, dim=-1)

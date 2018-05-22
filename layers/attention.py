@@ -65,7 +65,8 @@ class Attention(nn.Module):
             score = torch.bmm(qw, kt)
             
         # base_a attention module: FwNN with 2 inputs
-        # W1 * tanh(W2 * memory representation + W3 * aspect representation + bias)                      
+        # W1 * tanh(W2 * memory representation + W3 * aspect representation + bias)  
+        # W2 == kx and W3 == qx??
         elif self.score_function == 'a':
             kxx = torch.unsqueeze(kx, dim=1).expand(-1, q_len, -1, -1)
             qxx = torch.unsqueeze(qx, dim=2).expand(-1, -1, k_len, -1)

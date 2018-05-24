@@ -110,7 +110,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', default='twitter', type=str, help='twitter, restaurant, laptop')
     parser.add_argument('--optimizer', default='adam', type=str)
     parser.add_argument('--initializer', default='xavier_uniform_', type=str)
-    parser.add_argument('--learning_rate', default=0.001, type=int)
+    parser.add_argument('--learning_rate', default=0.001, type=float)
     parser.add_argument('--num_epoch', default=20, type=int)
     parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--log_step', default=10, type=int)

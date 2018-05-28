@@ -30,12 +30,16 @@ class Attention(nn.Module):
         self.dropout = nn.Dropout(dropout)
         if score_function == 'mlp':
             self.weight = nn.Parameter(torch.Tensor(hidden_dim*2, 1))
+        elif self.score_function == 'mlp_sum':                               # FwNN wit 2 input (cabasc attention)
+            self.weight = nn.Parameter(torch.Tensor(hidden_dim, 1))                              
+            self.b1 = nn.Parameter(torch.Tensor(hidden_dim))
         elif self.score_function == 'bi_linear':
             self.weight = nn.Parameter(torch.Tensor(hidden_dim, hidden_dim))
         else:
             self.register_parameter('weight', None)
 
     def forward(self, k, q):
+        # k: memory, q: aspect, s: sentence (optional)
         if len(q.shape) == 2:  # q_len missing
             q = torch.unsqueeze(q, dim=1)
         if len(k.shape) == 2:  # k_len missing
@@ -61,13 +65,19 @@ class Attention(nn.Module):
             kxx = torch.unsqueeze(kx, dim=1).expand(-1, q_len, -1, -1)
             qxx = torch.unsqueeze(qx, dim=2).expand(-1, -1, k_len, -1)
             kq = torch.cat((kxx, qxx), dim=-1)  # (n_head*?, q_len, k_len, hidden_dim*2)
-            score = F.tanh(torch.matmul(kq, self.weight).squeeze(dim=-1))
+            score = F.tanh(torch.matmul(kq, self.weight).squeeze(dim=-1))    
+        elif self.score_function == 'mlp_sum':
+            kxx = torch.unsqueeze(kx, dim=1).expand(-1, q_len, -1, -1)      
+            qxx = torch.unsqueeze(qx, dim=2).expand(-1, -1, k_len, -1)                          
+            kq = kxx +  qxx + self.b1                                       # FwNN2  #TO DO: Implement option for FwNN3        
+            score = torch.matmul(F.tanh(kq), self.weight).squeeze(dim=-1)   # W1 * tanh(kq)    
         elif self.score_function == 'bi_linear':
             qw = torch.matmul(qx, self.weight)
             kt = kx.permute(0, 2, 1)
             score = torch.bmm(qw, kt)
         else:
             raise RuntimeError('invalid score_function')
+            
         score = F.softmax(score, dim=-1)
         output = torch.bmm(score, kx)  # (n_head*?, q_len, hidden_dim)
         output = torch.cat(torch.split(output, mb_size, dim=0), dim=-1)  # (?, q_len, n_head*hidden_dim)

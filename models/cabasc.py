@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from layers.squeeze_embedding import SqueezeEmbedding
-from layers.dynamic_rnn import DynamicLSTM          # context attention
+from layers.dynamic_rnn import DynamicLSTM         
 
 class Cabasc(nn.Module):
     def __init__(self, embedding_matrix, opt, type = 'cabasc'):
@@ -21,7 +21,6 @@ class Cabasc(nn.Module):
         self.m_linear = nn.Linear(opt.embed_dim, opt.embed_dim, bias = False)        
         self.mlp = nn.Linear(opt.embed_dim, opt.embed_dim)                           # W4
         self.dense = nn.Linear(opt.embed_dim, opt.polarities_dim)                    # W5
-        
         # context attention layer
         self.rnn_l = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, rnn_type = 'GRU') 
         self.rnn_r = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, rnn_type = 'GRU')
@@ -45,7 +44,6 @@ class Cabasc(nn.Module):
         for i in range(memory.size(0)): 
             aspect_start = (left_len[i] - aspect_len[i]).item()
             aspect_end = left_len[i] 
-            
             # attention weights for each element in the sentence
             for idx in range(memory_len[i]):
                 if idx < aspect_start: memory[i][idx] *= attn_l[i][idx]             

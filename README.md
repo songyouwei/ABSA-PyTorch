@@ -33,9 +33,7 @@ tensorboard --logdir=./ian_logs
 ## Implemented models
 
 ### Cabasc ([cabasc.py](./models/cabasc.py)))
-Qiao Liu, Haibin Zhang, Yifu Zeng, Ziqi Huang, and Zufeng Wu. 2018. Content Attention Model for Aspect Based Sentiment Analysis. In Proceedings of the 2018 World Wide Web Conference (WWW '18). International World Wide Web Conferences Steering Committee, Republic and Canton of Geneva, Switzerland, 1023-1032.
-
-[[pdf]](http://delivery.acm.org/10.1145/3190000/3186001/p1023-liu.pdf?ip=156.83.3.2&id=3186001&acc=OPEN&key=4D4702B0C3E38B35%2E4D4702B0C3E38B35%2E4D4702B0C3E38B35%2E6D218144511F3437&__acm__=1527502562_2168470ffdb1b6b512d35dcba3ebf660)
+Qiao Liu, Haibin Zhang, Yifu Zeng, Ziqi Huang, and Zufeng Wu. 2018. Content Attention Model for Aspect Based Sentiment Analysis. In Proceedings of the 2018 World Wide Web Conference (WWW '18). International World Wide Web Conferences Steering Committee, Republic and Canton of Geneva, Switzerland, 1023-1032.[[pdf]](http://delivery.acm.org/10.1145/3190000/3186001/p1023-liu.pdf?ip=156.83.3.2&id=3186001&acc=OPEN&key=4D4702B0C3E38B35%2E4D4702B0C3E38B35%2E4D4702B0C3E38B35%2E6D218144511F3437&__acm__=1527502562_2168470ffdb1b6b512d35dcba3ebf660)
 
 ![cabasc](assets/cabasc.png)
 

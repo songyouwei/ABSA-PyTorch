@@ -109,7 +109,7 @@ class ABSADatesetReader:
             text_left, _, text_right = [s.lower().strip() for s in lines[i].partition("$T$")]
             aspect = lines[i + 1].lower().strip()
             text_raw = text_left + " " + aspect + " " + text_right
-            text += text_raw
+            text += text_raw + " "
         return text
 
     @staticmethod

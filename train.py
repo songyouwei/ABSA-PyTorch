@@ -15,6 +15,7 @@ from models.ian import IAN
 from models.memnet import MemNet
 from models.ram import RAM
 from models.td_lstm import TD_LSTM
+from models.cabasc import Cabasc
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Instructor:
@@ -128,6 +129,7 @@ if __name__ == '__main__':
         'ian': IAN,
         'memnet': MemNet,
         'ram': RAM,
+        'cabasc': Cabasc
     }
     input_colses = {
         'lstm': ['text_raw_indices'],
@@ -135,6 +137,7 @@ if __name__ == '__main__':
         'ian': ['text_raw_indices', 'aspect_indices'],
         'memnet': ['text_raw_without_aspect_indices', 'aspect_indices', 'text_left_with_aspect_indices'],
         'ram': ['text_raw_indices', 'aspect_indices'],
+        'cabasc': ['text_raw_indices', 'aspect_indices', 'text_left_with_aspect_indices', 'text_right_with_aspect_indices'],
     }
     initializers = {
         'xavier_uniform_': torch.nn.init.xavier_uniform_,

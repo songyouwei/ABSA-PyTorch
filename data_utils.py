@@ -100,16 +100,17 @@ class ABSADataset(Dataset):
 
 class ABSADatesetReader:
     @staticmethod
-    def __read_text__(fname):
-        fin = open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
-        lines = fin.readlines()
-        fin.close()
+    def __read_text__(fnames):
         text = ''
-        for i in range(0, len(lines), 3):
-            text_left, _, text_right = [s.lower().strip() for s in lines[i].partition("$T$")]
-            aspect = lines[i + 1].lower().strip()
-            text_raw = text_left + " " + aspect + " " + text_right
-            text += text_raw + " "
+        for fname in fnames:
+            fin = open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
+            lines = fin.readlines()
+            fin.close()
+            for i in range(0, len(lines), 3):
+                text_left, _, text_right = [s.lower().strip() for s in lines[i].partition("$T$")]
+                aspect = lines[i + 1].lower().strip()
+                text_raw = text_left + " " + aspect + " " + text_right
+                text += text_raw + " "
         return text
 
     @staticmethod
@@ -163,7 +164,7 @@ class ABSADatesetReader:
                 'test': './datasets/semeval14/Laptops_Test_Gold.xml.seg'
             }
         }
-        text = ABSADatesetReader.__read_text__(fname[dataset]['train'])
+        text = ABSADatesetReader.__read_text__([fname[dataset]['train'], fname[dataset]['test']])
         tokenizer = Tokenizer(max_seq_len=max_seq_len)
         tokenizer.fit_on_text(text.lower())
         self.embedding_matrix = build_embedding_matrix(tokenizer.word2idx, embed_dim, dataset)

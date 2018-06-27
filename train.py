@@ -16,7 +16,6 @@ from models.memnet import MemNet
 from models.ram import RAM
 from models.td_lstm import TD_LSTM
 from models.cabasc import Cabasc
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Instructor:
     def __init__(self, opt):
@@ -30,7 +29,7 @@ class Instructor:
         self.test_data_loader = DataLoader(dataset=absa_dataset.test_data, batch_size=len(absa_dataset.test_data), shuffle=False)
         self.writer = SummaryWriter(log_dir=opt.logdir)
 
-        self.model = opt.model_class(absa_dataset.embedding_matrix, opt).to(device)
+        self.model = opt.model_class(absa_dataset.embedding_matrix, opt).to(opt.device)
         self.reset_parameters()
 
     def reset_parameters(self):
@@ -64,8 +63,8 @@ class Instructor:
                 self.model.train()
                 optimizer.zero_grad()
 
-                inputs = [sample_batched[col].to(device) for col in self.opt.inputs_cols]
-                targets = sample_batched['polarity'].to(device)
+                inputs = [sample_batched[col].to(opt.device) for col in self.opt.inputs_cols]
+                targets = sample_batched['polarity'].to(opt.device)
                 outputs = self.model(inputs)
 
                 loss = criterion(outputs, targets)
@@ -82,8 +81,8 @@ class Instructor:
                     n_test_correct, n_test_total = 0, 0
                     with torch.no_grad():
                         for t_batch, t_sample_batched in enumerate(self.test_data_loader):
-                            t_inputs = [t_sample_batched[col].to(device) for col in self.opt.inputs_cols]
-                            t_targets = t_sample_batched['polarity'].to(device)
+                            t_inputs = [t_sample_batched[col].to(opt.device) for col in self.opt.inputs_cols]
+                            t_targets = t_sample_batched['polarity'].to(opt.device)
                             t_outputs = self.model(t_inputs)
 
                             n_test_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()
@@ -102,6 +101,7 @@ class Instructor:
         self.writer.close()
 
         print('max_test_acc: {0}'.format(max_test_acc))
+        return max_test_acc
 
 
 if __name__ == '__main__':
@@ -122,6 +122,7 @@ if __name__ == '__main__':
     parser.add_argument('--max_seq_len', default=80, type=int)
     parser.add_argument('--polarities_dim', default=3, type=int)
     parser.add_argument('--hops', default=3, type=int)
+    parser.add_argument('--device', default=None, type=str)
     opt = parser.parse_args()
 
     model_classes = {
@@ -158,7 +159,8 @@ if __name__ == '__main__':
     opt.inputs_cols = input_colses[opt.model_name]
     opt.initializer = initializers[opt.initializer]
     opt.optimizer = optimizers[opt.optimizer]
-    opt.device = device
+    opt.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') \
+        if opt.device is None else torch.device(opt.device)
 
     ins = Instructor(opt)
     ins.run()

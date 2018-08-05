@@ -10,29 +10,21 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 import argparse
 
-from models.lstm import LSTM
-from models.ian import IAN
-from models.memnet import MemNet
-from models.ram import RAM
-from models.td_lstm import TD_LSTM
-from models.cabasc import Cabasc
+from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc
+
 
 class Instructor:
     def __init__(self, opt):
         self.opt = opt
-        print('> training arguments:')
-        for arg in vars(opt):
-            print('>>> {0}: {1}'.format(arg, getattr(opt, arg)))
 
         absa_dataset = ABSADatesetReader(dataset=opt.dataset, embed_dim=opt.embed_dim, max_seq_len=opt.max_seq_len)
         self.train_data_loader = DataLoader(dataset=absa_dataset.train_data, batch_size=opt.batch_size, shuffle=True)
         self.test_data_loader = DataLoader(dataset=absa_dataset.test_data, batch_size=len(absa_dataset.test_data), shuffle=False)
-        self.writer = SummaryWriter(log_dir=opt.logdir)
 
         self.model = opt.model_class(absa_dataset.embedding_matrix, opt).to(opt.device)
-        self.reset_parameters()
+        self._init_and_print_parameters()
 
-    def reset_parameters(self):
+    def _init_and_print_parameters(self):
         n_trainable_params, n_nontrainable_params = 0, 0
         for p in self.model.parameters():
             n_params = torch.prod(torch.tensor(p.shape))
@@ -44,12 +36,8 @@ class Instructor:
                 n_nontrainable_params += n_params
         print('n_trainable_params: {0}, n_nontrainable_params: {1}'.format(n_trainable_params, n_nontrainable_params))
 
-    def run(self):
-        # Loss and Optimizer
-        criterion = nn.CrossEntropyLoss()
-        params = filter(lambda p: p.requires_grad, self.model.parameters())
-        optimizer = self.opt.optimizer(params, lr=self.opt.learning_rate)
-
+    def _train(self, criterion, optimizer):
+        writer = SummaryWriter(log_dir=self.opt.logdir)
         max_test_acc = 0
         global_step = 0
         for epoch in range(self.opt.num_epoch):
@@ -63,9 +51,9 @@ class Instructor:
                 self.model.train()
                 optimizer.zero_grad()
 
-                inputs = [sample_batched[col].to(opt.device) for col in self.opt.inputs_cols]
-                targets = sample_batched['polarity'].to(opt.device)
+                inputs = [sample_batched[col].to(self.opt.device) for col in self.opt.inputs_cols]
                 outputs = self.model(inputs)
+                targets = sample_batched['polarity'].to(self.opt.device)
 
                 loss = criterion(outputs, targets)
                 loss.backward()
@@ -76,30 +64,45 @@ class Instructor:
                     n_total += len(outputs)
                     train_acc = n_correct / n_total
 
-                    # switch model to evaluation mode
-                    self.model.eval()
-                    n_test_correct, n_test_total = 0, 0
-                    with torch.no_grad():
-                        for t_batch, t_sample_batched in enumerate(self.test_data_loader):
-                            t_inputs = [t_sample_batched[col].to(opt.device) for col in self.opt.inputs_cols]
-                            t_targets = t_sample_batched['polarity'].to(opt.device)
-                            t_outputs = self.model(t_inputs)
+                    test_acc = self._evaluate_acc()
+                    if test_acc > max_test_acc:
+                        max_test_acc = test_acc
 
-                            n_test_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()
-                            n_test_total += len(t_outputs)
-                        test_acc = n_test_correct / n_test_total
-                        if test_acc > max_test_acc:
-                            max_test_acc = test_acc
+                    writer.add_scalar('loss', loss, global_step)
+                    writer.add_scalar('acc', train_acc, global_step)
+                    writer.add_scalar('test_acc', test_acc, global_step)
+                    print('loss: {:.4f}, acc: {:.4f}, test_acc: {:.4f}'.format(loss.item(), train_acc, test_acc))
 
-                        print('loss: {:.4f}, acc: {:.4f}, test_acc: {:.4f}'.format(loss.item(), train_acc, test_acc))
+        writer.close()
+        return max_test_acc
 
-                        # log
-                        self.writer.add_scalar('loss', loss, global_step)
-                        self.writer.add_scalar('acc', train_acc, global_step)
-                        self.writer.add_scalar('test_acc', test_acc, global_step)
+    def _evaluate_acc(self):
+        # switch model to evaluation mode
+        self.model.eval()
+        n_test_correct, n_test_total = 0, 0
+        with torch.no_grad():
+            for t_batch, t_sample_batched in enumerate(self.test_data_loader):
+                t_inputs = [t_sample_batched[col].to(opt.device) for col in self.opt.inputs_cols]
+                t_targets = t_sample_batched['polarity'].to(opt.device)
+                t_outputs = self.model(t_inputs)
 
-        self.writer.close()
+                n_test_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()
+                n_test_total += len(t_outputs)
 
+        test_acc = n_test_correct / n_test_total
+        return test_acc
+
+    def run(self):
+        print('> training arguments:')
+        for arg in vars(self.opt):
+            print('>>> {0}: {1}'.format(arg, getattr(self.opt, arg)))
+
+        # Loss and Optimizer
+        criterion = nn.CrossEntropyLoss()
+        _params = filter(lambda p: p.requires_grad, self.model.parameters())
+        optimizer = self.opt.optimizer(_params, lr=self.opt.learning_rate)
+
+        max_test_acc = self._train(criterion, optimizer)
         print('max_test_acc: {0}'.format(max_test_acc))
         return max_test_acc
 

@@ -31,15 +31,15 @@ class IAN(nn.Module):
         aspect, (_, _) = self.lstm_aspect(aspect, aspect_len)
 
         aspect_len = torch.tensor(aspect_len, dtype=torch.float).to(self.opt.device)
-        aspect = torch.sum(aspect, dim=1)
-        aspect = torch.div(aspect, aspect_len.view(aspect_len.size(0), 1))
+        aspect_pool = torch.sum(aspect, dim=1)
+        aspect_pool = torch.div(aspect_pool, aspect_len.view(aspect_len.size(0), 1))
 
         text_raw_len = torch.tensor(text_raw_len, dtype=torch.float).to(self.opt.device)
-        context = torch.sum(context, dim=1)
-        context = torch.div(context, text_raw_len.view(text_raw_len.size(0), 1))
+        context_pool = torch.sum(context, dim=1)
+        context_pool = torch.div(context_pool, text_raw_len.view(text_raw_len.size(0), 1))
 
-        aspect_final = self.attention_aspect(aspect, context).squeeze(dim=1)
-        context_final = self.attention_context(context, aspect).squeeze(dim=1)
+        aspect_final = self.attention_aspect(aspect, context_pool).squeeze(dim=1)
+        context_final = self.attention_context(context, aspect_pool).squeeze(dim=1)
 
         x = torch.cat((aspect_final, context_final), dim=-1)
         out = self.dense(x)

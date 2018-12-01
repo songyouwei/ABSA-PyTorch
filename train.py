@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 import argparse
 
-from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc
+from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM
 
 
 class Instructor:

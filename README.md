@@ -4,7 +4,7 @@
 >
 > 基于方面的情感分析，使用PyTorch实现。
 
-![Packagist](https://img.shields.io/packagist/l/doctrine/orm.svg) ![PRsWelcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg) ![PythonVersion](https://img.shields.io/pypi/pyversions/Django.svg)
+![Packagist](https://img.shields.io/packagist/l/doctrine/orm.svg) ![PRsWelcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
 
 ## Requirement
 
@@ -24,7 +24,7 @@
 python train.py --model_name ian --dataset twitter --logdir ian_logs
 ```
 
-### See the training process (needs to install TensorFlow)
+#### See the training process (needs to install TensorFlow)
 
 ```sh
 tensorboard --logdir=./ian_logs
@@ -54,6 +54,11 @@ Tang, Duyu, B. Qin, and T. Liu. "Aspect Level Sentiment Classification with Deep
 Ma, Dehong, et al. "Interactive Attention Networks for Aspect-Level Sentiment Classification." arXiv preprint arXiv:1709.00893 (2017). [[pdf]](https://arxiv.org/pdf/1709.00893)
 
 ![han](assets/han.png)
+
+### ATAE-LSTM ([atae_lstm.py](./models/atae_lstm.py))
+Wang, Yequan, Minlie Huang, and Li Zhao. "Attention-based lstm for aspect-level sentiment classification." Proceedings of the 2016 conference on empirical methods in natural language processing. 2016.
+
+![han](assets/atae-lstm.png)
 
 
 ### TD-LSTM ([td_lstm.py](./models/td_lstm.py))

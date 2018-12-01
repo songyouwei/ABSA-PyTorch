@@ -37,7 +37,7 @@ class MemNet(nn.Module):
 
     def forward(self, inputs):
         text_raw_without_aspect_indices, aspect_indices, left_with_aspect_indices = inputs[0], inputs[1], inputs[2]
-        left_len = torch.sum(left_with_aspect_indices != 0, dim = -1)
+        # left_len = torch.sum(left_with_aspect_indices != 0, dim = -1)
         memory_len = torch.sum(text_raw_without_aspect_indices != 0, dim=-1)
         aspect_len = torch.sum(aspect_indices != 0, dim=-1)
         nonzeros_aspect = torch.tensor(aspect_len, dtype=torch.float).to(self.opt.device)
@@ -51,7 +51,7 @@ class MemNet(nn.Module):
         x = aspect.unsqueeze(dim=1)
         for _ in range(self.opt.hops):
             x = self.x_linear(x)
-            out_at = self.attention(memory, x)
+            out_at, _ = self.attention(memory, x)
             x = out_at + x
         x = x.view(x.size(0), -1)
         out = self.dense(x)

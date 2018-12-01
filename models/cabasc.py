@@ -102,7 +102,7 @@ class Cabasc(nn.Module):
         # content attention module
         for _ in range(self.opt.hops):  
             #x = self.x_linear(x)
-            v_ts = self.attention(memory, x)                 
+            v_ts, _ = self.attention(memory, x)
        
         # classifier
         v_ns = v_ts + v_s                                 # embedd the sentence

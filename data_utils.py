@@ -6,6 +6,7 @@
 import os
 import pickle
 import numpy as np
+import torch
 from torch.utils.data import Dataset
 
 
@@ -132,6 +133,9 @@ class ABSADatesetReader:
             text_right_indices = tokenizer.text_to_sequence(text_right, reverse=True)
             text_right_with_aspect_indices = tokenizer.text_to_sequence(" " + aspect + " " + text_right, reverse=True)
             aspect_indices = tokenizer.text_to_sequence(aspect)
+            left_context_len = np.sum(text_left_indices != 0)
+            aspect_len = np.sum(aspect_indices != 0)
+            aspect_in_text = torch.tensor([left_context_len.item(), (left_context_len + aspect_len - 1).item()])
             polarity = int(polarity)+1
 
             data = {
@@ -142,6 +146,7 @@ class ABSADatesetReader:
                 'text_right_indices': text_right_indices,
                 'text_right_with_aspect_indices': text_right_with_aspect_indices,
                 'aspect_indices': aspect_indices,
+                'aspect_in_text': aspect_in_text,
                 'polarity': polarity,
             }
 

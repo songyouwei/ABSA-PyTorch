@@ -12,7 +12,7 @@ from tensorboardX import SummaryWriter
 import argparse
 import math
 
-from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM
+from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF
 
 
 class Instructor:
@@ -167,6 +167,7 @@ if __name__ == '__main__':
         'memnet': MemNet,
         'ram': RAM,
         'cabasc': Cabasc,
+        'tnet_lf': TNet_LF,
     }
     input_colses = {
         'lstm': ['text_raw_indices'],
@@ -176,6 +177,7 @@ if __name__ == '__main__':
         'memnet': ['text_raw_without_aspect_indices', 'aspect_indices', 'text_left_with_aspect_indices'],
         'ram': ['text_raw_indices', 'aspect_indices'],
         'cabasc': ['text_raw_indices', 'aspect_indices', 'text_left_with_aspect_indices', 'text_right_with_aspect_indices'],
+        'tnet_lf': ['text_raw_indices', 'aspect_indices', 'aspect_in_text'],
     }
     initializers = {
         'xavier_uniform_': torch.nn.init.xavier_uniform_,

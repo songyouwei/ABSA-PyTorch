@@ -10,3 +10,4 @@ from models.ram import RAM
 from models.td_lstm import TD_LSTM
 from models.cabasc import Cabasc
 from models.atae_lstm import ATAE_LSTM
+from models.tnet_lf import TNet_LF

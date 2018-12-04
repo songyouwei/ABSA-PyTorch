@@ -32,6 +32,11 @@ tensorboard --logdir=./ian_logs
 
 ## Implemented models
 
+### TNet ([tnet_lf.py](./models/tnet_lf.py)) [[pdf]](https://arxiv.org/pdf/1805.01086)
+Li, Xin, et al. "Transformation Networks for Target-Oriented Sentiment Classification." arXiv preprint arXiv:1805.01086 (2018).
+
+![tnet_lf](assets/tnet_lf.png)
+
 ### Cabasc ([cabasc.py](./models/cabasc.py))
 Liu, Qiao, et al. "Content Attention Model for Aspect Based Sentiment Analysis." Proceedings of the 2018 World Wide Web Conference on World Wide Web. International World Wide Web Conferences Steering Committee, 2018.
 

@@ -24,7 +24,8 @@ class Instructor:
         self.test_data_loader = DataLoader(dataset=absa_dataset.test_data, batch_size=opt.batch_size, shuffle=False)
 
         self.model = opt.model_class(absa_dataset.embedding_matrix, opt).to(opt.device)
-        print("cuda memory allocated:", torch.cuda.memory_allocated(device=0))
+        if opt.device.type == 'cuda':
+            print("cuda memory allocated:", torch.cuda.memory_allocated(device=opt.device.index))
         self._print_args()
 
     def _print_args(self):

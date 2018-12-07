@@ -175,8 +175,8 @@ if __name__ == '__main__':
         'td_lstm': ['text_left_with_aspect_indices', 'text_right_with_aspect_indices'],
         'atae_lstm': ['text_raw_indices', 'aspect_indices'],
         'ian': ['text_raw_indices', 'aspect_indices'],
-        'memnet': ['text_raw_without_aspect_indices', 'aspect_indices', 'text_left_with_aspect_indices'],
-        'ram': ['text_raw_indices', 'aspect_indices'],
+        'memnet': ['text_raw_without_aspect_indices', 'aspect_indices'],
+        'ram': ['text_raw_indices', 'aspect_indices', 'text_left_indices'],
         'cabasc': ['text_raw_indices', 'aspect_indices', 'text_left_with_aspect_indices', 'text_right_with_aspect_indices'],
         'tnet_lf': ['text_raw_indices', 'aspect_indices', 'aspect_in_text'],
     }

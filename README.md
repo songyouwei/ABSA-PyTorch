@@ -32,7 +32,7 @@ tensorboard --logdir=./ian_logs
 
 ## Implemented models
 
-### AoA ([aoa.py](./models/aoa.py)) [[pdf]](https://arxiv.org/pdf/1804.06536.pdf)
+### AOA ([aoa.py](./models/aoa.py)) [[pdf]](https://arxiv.org/pdf/1804.06536.pdf)
 Huang, Binxuan, et al. "Aspect Level Sentiment Classification with Attention-over-Attention Neural Networks." arXiv preprint arXiv:1804.06536 (2018).
 
 ![aoa](assets/aoa.png)

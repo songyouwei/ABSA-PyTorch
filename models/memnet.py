@@ -29,7 +29,7 @@ class MemNet(nn.Module):
         self.dense = nn.Linear(opt.embed_dim, opt.polarities_dim)
 
     def forward(self, inputs):
-        text_raw_without_aspect_indices, aspect_indices, left_with_aspect_indices = inputs[0], inputs[1], inputs[2]
+        text_raw_without_aspect_indices, aspect_indices = inputs[0], inputs[1]
         # left_len = torch.sum(left_with_aspect_indices != 0, dim = -1)
         memory_len = torch.sum(text_raw_without_aspect_indices != 0, dim=-1)
         aspect_len = torch.sum(aspect_indices != 0, dim=-1)

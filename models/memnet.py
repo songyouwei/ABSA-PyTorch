@@ -12,18 +12,11 @@ from layers.squeeze_embedding import SqueezeEmbedding
 
 class MemNet(nn.Module):
     
-    def locationed_memory(self, memory, memory_len, left_len, aspect_len):
+    def locationed_memory(self, memory, memory_len):
         # here we just simply calculate the location vector in Model2's manner
-        '''
-        Updated to calculate location as the absolute diference between context word and aspect
-        '''
         for i in range(memory.size(0)):
             for idx in range(memory_len[i]):
-                aspect_start = left_len[i] - aspect_len[i]
-                if idx < aspect_start: l = aspect_start.item() - idx                   # l = absolute distance to the aspect
-                else: l = idx +1 - aspect_start.item()
-                memory[i][idx] *= (1-float(l)/int(memory_len[i]))
-               
+                memory[i][idx] *= (1-float(idx)/int(memory_len[i]))
         return memory
 
     def __init__(self, embedding_matrix, opt):
@@ -44,7 +37,7 @@ class MemNet(nn.Module):
 
         memory = self.embed(text_raw_without_aspect_indices)
         memory = self.squeeze_embedding(memory, memory_len)
-        # memory = self.locationed_memory(memory, memory_len, left_len, aspect_len)
+        # memory = self.locationed_memory(memory, memory_len)
         aspect = self.embed(aspect_indices)
         aspect = torch.sum(aspect, dim=1)
         aspect = torch.div(aspect, nonzeros_aspect.view(nonzeros_aspect.size(0), 1))

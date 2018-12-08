@@ -21,6 +21,7 @@ class Absolute_Position_Embedding(nn.Module):
         x = weight.unsqueeze(2) * x
         return x
 
+    '''
     def weight_matrix(self, pos_inx, batch_size, seq_len):
         pos_inx = pos_inx.cpu().numpy()
         weight = [[] for i in range(batch_size)]
@@ -37,6 +38,20 @@ class Absolute_Position_Embedding(nn.Module):
                 aspect_len = pos_inx[i][1] - pos_inx[i][0] + 1
                 sentence_len = seq_len - aspect_len
                 weight[i].append(1 - relative_pos / sentence_len)
+        weight = torch.tensor(weight)
+        return weight
+    '''
+
+    def weight_matrix(self, pos_inx, batch_size, seq_len):
+        pos_inx = pos_inx.cpu().numpy()
+        weight = [[] for i in range(batch_size)]
+        for i in range(batch_size):
+            for j in range(pos_inx[i][1]):
+                relative_pos = pos_inx[i][1] - j
+                weight[i].append(1 - relative_pos / 40)
+            for j in range(pos_inx[i][1], seq_len):
+                relative_pos = j - pos_inx[i][0]
+                weight[i].append(1 - relative_pos / 40)
         weight = torch.tensor(weight)
         return weight
 
@@ -71,10 +86,10 @@ class TNet_LF(nn.Module):
             a = F.softmax(a, 1)  # (aspect_len,context_len)
             aspect_mid = torch.bmm(e, a)
             aspect_mid = torch.cat((aspect_mid, v), dim=1).transpose(1, 2)
-            aspect_mid = self.fc1(aspect_mid).transpose(1, 2)
+            aspect_mid = F.relu(self.fc1(aspect_mid).transpose(1, 2))
             v = aspect_mid + v
-        z = F.relu(self.convs3(
-            self.position(v.transpose(1, 2), aspect_in_text).transpose(1, 2)))  # [(N,Co,L), ...]*len(Ks)
+            v = self.position(v.transpose(1, 2), aspect_in_text).transpose(1, 2)
+        z = F.relu(self.convs3(v))  # [(N,Co,L), ...]*len(Ks)
         z = F.max_pool1d(z, z.size(2)).squeeze(2)
         out = self.fc(z)
         return out

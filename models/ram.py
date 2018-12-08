@@ -10,11 +10,15 @@ import torch.nn as nn
 
 
 class RAM(nn.Module):
-    def locationed_memory(self, memory, memory_len):
+    def locationed_memory(self, memory, memory_len, left_len):
         # here we just simply calculate the location vector in Model2's manner
         for i in range(memory.size(0)):
             for idx in range(memory_len[i]):
-                memory[i][idx] *= (1-float(idx)/int(memory_len[i]))
+                aspect_start = left_len[i]
+                if idx < aspect_start: l = aspect_start.item() - idx                   # l = absolute distance to the aspect
+                else: l = idx +1 - aspect_start.item()
+                memory[i][idx] *= (1-float(l)/int(memory_len[i]))
+               
         return memory
 
     def __init__(self, embedding_matrix, opt):
@@ -28,14 +32,15 @@ class RAM(nn.Module):
         self.dense = nn.Linear(opt.hidden_dim*2, opt.polarities_dim)
 
     def forward(self, inputs):
-        text_raw_indices, aspect_indices = inputs[0], inputs[1]
+        text_raw_indices, aspect_indices, text_left_indices = inputs[0], inputs[1], inputs[2]
+        left_len = torch.sum(text_left_indices != 0, dim=-1)
         memory_len = torch.sum(text_raw_indices != 0, dim=-1)
         aspect_len = torch.sum(aspect_indices != 0, dim=-1)
         nonzeros_aspect = torch.tensor(aspect_len, dtype=torch.float).to(self.opt.device)
 
         memory = self.embed(text_raw_indices)
         memory, (_, _) = self.bi_lstm_context(memory, memory_len)
-        # memory = self.locationed_memory(memory, memory_len)
+        # memory = self.locationed_memory(memory, memory_len, left_len)
         aspect = self.embed(aspect_indices)
         aspect, (_, _) = self.bi_lstm_aspect(aspect, aspect_len)
         aspect = torch.sum(aspect, dim=1)

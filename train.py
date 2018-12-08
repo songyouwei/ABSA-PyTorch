@@ -12,7 +12,7 @@ from tensorboardX import SummaryWriter
 import argparse
 import math
 
-from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AoA
+from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA
 
 
 class Instructor:
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         'ram': RAM,
         'cabasc': Cabasc,
         'tnet_lf': TNet_LF,
-        'aoa': AoA
+        'aoa': AOA,
     }
     input_colses = {
         'lstm': ['text_raw_indices'],

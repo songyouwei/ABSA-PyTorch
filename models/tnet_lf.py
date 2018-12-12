@@ -36,19 +36,6 @@ class Absolute_Position_Embedding(nn.Module):
         weight = torch.tensor(weight)
         return weight
 
-    def weight_matrix(self, pos_inx, batch_size, seq_len):
-        pos_inx = pos_inx.cpu().numpy()
-        weight = [[] for i in range(batch_size)]
-        for i in range(batch_size):
-            for j in range(pos_inx[i][1]):
-                relative_pos = pos_inx[i][1] - j
-                weight[i].append(1 - relative_pos / 40)
-            for j in range(pos_inx[i][1], seq_len):
-                relative_pos = j - pos_inx[i][0]
-                weight[i].append(1 - relative_pos / 40)
-        weight = torch.tensor(weight)
-        return weight
-
 class TNet_LF(nn.Module):
     def __init__(self, embedding_matrix, opt):
         super(TNet_LF, self).__init__()

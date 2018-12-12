@@ -12,7 +12,7 @@ from layers.squeeze_embedding import SqueezeEmbedding
 from layers.dynamic_rnn import DynamicLSTM         
 
 class Cabasc(nn.Module):
-    def __init__(self, embedding_matrix, opt, _type='cabasc'):
+    def __init__(self, embedding_matrix, opt, _type='c'):
         super(Cabasc, self).__init__()
         self.opt = opt
         self.type = _type
@@ -39,8 +39,8 @@ class Cabasc(nn.Module):
         
         # Attention weights : (batch_size, max_batch_len, 1) 
         # 0.5 should be a variable according to the paper
-        attn_l = F.sigmoid(self.mlp_l(context_l)) + 0.5
-        attn_r = F.sigmoid(self.mlp_r(context_r)) + 0.5
+        attn_l = torch.sigmoid(self.mlp_l(context_l)) + 0.5
+        attn_r = torch.sigmoid(self.mlp_r(context_r)) + 0.5
         
         # apply weights one sample at a time
         for i in range(memory.size(0)): 
@@ -126,7 +126,6 @@ class Cabasc(nn.Module):
         v_ns = v_ts + v_s                                 # embedd the sentence
         v_ns = v_ns.view(v_ns.size(0), -1)
         v_ms = torch.tanh(self.mlp(v_ns))
-        out = self.dense(v_ms)
-        out = F.softmax(out, dim=-1)   
+        out = self.dense(v_ms)   
         
         return out

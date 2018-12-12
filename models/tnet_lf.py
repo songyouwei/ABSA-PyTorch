@@ -21,26 +21,20 @@ class Absolute_Position_Embedding(nn.Module):
         x = weight.unsqueeze(2) * x
         return x
 
-    '''
+
+
     def weight_matrix(self, pos_inx, batch_size, seq_len):
         pos_inx = pos_inx.cpu().numpy()
         weight = [[] for i in range(batch_size)]
         for i in range(batch_size):
-            for j in range(pos_inx[i][0]):
-                relative_pos = pos_inx[i][0] - j
-                aspect_len = pos_inx[i][1] - pos_inx[i][0] + 1
-                sentence_len = seq_len - aspect_len
-                weight[i].append(1 - relative_pos / sentence_len)
-            for j in range(pos_inx[i][0], pos_inx[i][1] + 1):
-                weight[i].append(0)
-            for j in range(pos_inx[i][1] + 1, seq_len):
-                relative_pos = j - pos_inx[i][1]
-                aspect_len = pos_inx[i][1] - pos_inx[i][0] + 1
-                sentence_len = seq_len - aspect_len
-                weight[i].append(1 - relative_pos / sentence_len)
+            for j in range(pos_inx[i][1]):
+                relative_pos = pos_inx[i][1] - j
+                weight[i].append(1 - relative_pos / 40)
+            for j in range(pos_inx[i][1], seq_len):
+                relative_pos = j - pos_inx[i][0]
+                weight[i].append(1 - relative_pos / 40)
         weight = torch.tensor(weight)
         return weight
-    '''
 
     def weight_matrix(self, pos_inx, batch_size, seq_len):
         pos_inx = pos_inx.cpu().numpy()
@@ -66,7 +60,8 @@ class TNet_LF(nn.Module):
         C = opt.polarities_dim  # 分类数目
         L = opt.max_seq_len
         HD = opt.hidden_dim
-        self.lstm = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
+        self.lstm1 = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
+        self.lstm2 = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
         self.convs3 = nn.Conv1d(2 * HD, 50, 3, padding=1)
         self.fc1 = nn.Linear(4 * HD, 2 * HD)
         self.fc = nn.Linear(50, C)
@@ -77,8 +72,8 @@ class TNet_LF(nn.Module):
         aspect_len = torch.sum(aspect_indices != 0, dim=-1)
         feature = self.embed(text_raw_indices)
         aspect = self.embed(aspect_indices)
-        v, (_, _) = self.lstm(feature, feature_len)
-        e, (_, _) = self.lstm(aspect, aspect_len)
+        v, (_, _) = self.lstm1(feature, feature_len)
+        e, (_, _) = self.lstm2(aspect, aspect_len)
         v = v.transpose(1, 2)
         e = e.transpose(1, 2)
         for i in range(2):

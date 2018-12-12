@@ -30,7 +30,6 @@ class MemNet(nn.Module):
 
     def forward(self, inputs):
         text_raw_without_aspect_indices, aspect_indices = inputs[0], inputs[1]
-        # left_len = torch.sum(left_with_aspect_indices != 0, dim = -1)
         memory_len = torch.sum(text_raw_without_aspect_indices != 0, dim=-1)
         aspect_len = torch.sum(aspect_indices != 0, dim=-1)
         nonzeros_aspect = torch.tensor(aspect_len, dtype=torch.float).to(self.opt.device)

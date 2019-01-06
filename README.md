@@ -32,13 +32,13 @@ tensorboard --logdir=./ian_logs
 
 ## Implemented models
 
-### AOA ([aoa.py](./models/aoa.py)) [[pdf]](https://arxiv.org/pdf/1804.06536.pdf)
-Huang, Binxuan, et al. "Aspect Level Sentiment Classification with Attention-over-Attention Neural Networks." arXiv preprint arXiv:1804.06536 (2018).
+### AOA ([aoa.py](./models/aoa.py))
+Huang, Binxuan, et al. "Aspect Level Sentiment Classification with Attention-over-Attention Neural Networks." arXiv preprint arXiv:1804.06536 (2018). [[pdf]](https://arxiv.org/pdf/1804.06536.pdf)
 
 ![aoa](assets/aoa.png)
 
-### TNet ([tnet_lf.py](./models/tnet_lf.py)) [[pdf]](https://arxiv.org/pdf/1805.01086)
-Li, Xin, et al. "Transformation Networks for Target-Oriented Sentiment Classification." arXiv preprint arXiv:1805.01086 (2018).
+### TNet ([tnet_lf.py](./models/tnet_lf.py))
+Li, Xin, et al. "Transformation Networks for Target-Oriented Sentiment Classification." arXiv preprint arXiv:1805.01086 (2018). [[pdf]](https://arxiv.org/pdf/1805.01086)
 
 ![tnet_lf](assets/tnet_lf.png)
 

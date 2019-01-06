@@ -60,6 +60,6 @@ class RAM(nn.Module):
                 dim=-1))
             alpha = F.softmax(g, dim=1)
             i = torch.bmm(alpha.transpose(1, 2), memory).squeeze(1)  
-            et = self.grucell(i, et)
+            et = self.gru_cell(i, et)
         out = self.dense(et)
         return out

@@ -30,6 +30,10 @@ python train.py --model_name ian --dataset twitter --logdir ian_logs
 tensorboard --logdir=./ian_logs
 ```
 
+### Inference
+
+Please refer to [infer_example.py](./infer_example.py).
+
 ## Implemented models
 
 ### AOA ([aoa.py](./models/aoa.py))

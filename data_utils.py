@@ -172,6 +172,7 @@ class ABSADatesetReader:
         text = ABSADatesetReader.__read_text__([fname[dataset]['train'], fname[dataset]['test']])
         tokenizer = Tokenizer(max_seq_len=max_seq_len)
         tokenizer.fit_on_text(text.lower())
+        self.tokenizer = tokenizer
         self.embedding_matrix = build_embedding_matrix(tokenizer.word2idx, embed_dim, dataset)
         self.train_data = ABSADataset(ABSADatesetReader.__read_data__(fname[dataset]['train'], tokenizer))
         self.test_data = ABSADataset(ABSADatesetReader.__read_data__(fname[dataset]['test'], tokenizer))

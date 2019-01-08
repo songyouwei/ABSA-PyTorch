@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 import argparse
 import math
+import os
 
 from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA
 
@@ -50,7 +51,7 @@ class Instructor:
                     stdv = 1. / math.sqrt(p.shape[0])
                     torch.nn.init.uniform_(p, a=-stdv, b=stdv)
 
-    def _train(self, criterion, optimizer):
+    def _train(self, criterion, optimizer, max_test_acc_overall=0):
         writer = SummaryWriter(log_dir=self.opt.logdir)
         max_test_acc = 0
         max_f1 = 0
@@ -82,13 +83,19 @@ class Instructor:
                     test_acc, f1 = self._evaluate_acc_f1()
                     if test_acc > max_test_acc:
                         max_test_acc = test_acc
+                        if test_acc > max_test_acc_overall:
+                            if not os.path.exists('state_dict'):
+                                os.mkdir('state_dict')
+                            path = 'state_dict/{0}_{1}_acc{2}'.format(self.opt.model_name, self.opt.dataset, round(test_acc, 4))
+                            torch.save(self.model.state_dict(), path)
+                            print('>> saved: ' + path)
                     if f1 > max_f1:
                         max_f1 = f1
 
                     writer.add_scalar('loss', loss, global_step)
                     writer.add_scalar('acc', train_acc, global_step)
                     writer.add_scalar('test_acc', test_acc, global_step)
-                    print('loss: {:.4f}, acc: {:.4f}, test_acc: {:.4f}'.format(loss.item(), train_acc, test_acc))
+                    print('loss: {:.4f}, acc: {:.4f}, test_acc: {:.4f}, f1: {:.4f}'.format(loss.item(), train_acc, test_acc, f1))
 
         writer.close()
         return max_test_acc, max_f1
@@ -129,7 +136,7 @@ class Instructor:
         for i in range(repeats):
             print('repeat: ', i)
             self._reset_params()
-            max_test_acc, max_f1 = self._train(criterion, optimizer)
+            max_test_acc, max_f1 = self._train(criterion, optimizer, max_test_acc_overall=max_test_acc_overall)
             print('max_test_acc: {0}     max_f1: {1}'.format(max_test_acc, max_f1))
             max_test_acc_overall = max(max_test_acc, max_test_acc_overall)
             max_f1_overall = max(max_f1, max_f1_overall)
@@ -204,4 +211,4 @@ if __name__ == '__main__':
         if opt.device is None else torch.device(opt.device)
 
     ins = Instructor(opt)
-    ins.run()
+    ins.run(5)

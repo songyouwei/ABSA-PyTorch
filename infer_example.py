@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 import argparse
 
-from models import IAN, MemNet, TD_LSTM, ATAE_LSTM, AOA
+from models import IAN, MemNet, ATAE_LSTM, AOA
 
 
 class Inferer:
@@ -40,24 +40,31 @@ class Inferer:
 if __name__ == '__main__':
     # Hyper Parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name', default='ian', type=str)
-    parser.add_argument('--state_dict_path', default='state_dict/ian_restaurant_acc0.7911', type=str)
+    parser.add_argument('--model_name', default='aoa', type=str)
     parser.add_argument('--dataset', default='restaurant', type=str, help='twitter, restaurant, laptop')
     parser.add_argument('--embed_dim', default=300, type=int)
     parser.add_argument('--hidden_dim', default=300, type=int)
     parser.add_argument('--max_seq_len', default=80, type=int)
     parser.add_argument('--polarities_dim', default=3, type=int)
+    parser.add_argument('--hops', default=3, type=int)
     parser.add_argument('--device', default=None, type=str)
     opt = parser.parse_args()
 
     model_classes = {
-        'td_lstm': TD_LSTM,
         'atae_lstm': ATAE_LSTM,
         'ian': IAN,
         'memnet': MemNet,
         'aoa': AOA,
     }
+    # set your trained models here
+    model_state_dict_paths = {
+        'atae_lstm': 'state_dict/atae_lstm_restaurant_acc0.7786',
+        'ian': 'state_dict/ian_restaurant_acc0.7911',
+        'memnet': 'state_dict/memnet_restaurant_acc0.7911',
+        'aoa': 'state_dict/aoa_restaurant_acc0.8063',
+    }
     opt.model_class = model_classes[opt.model_name]
+    opt.state_dict_path = model_state_dict_paths[opt.model_name]
     opt.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') \
         if opt.device is None else torch.device(opt.device)
 

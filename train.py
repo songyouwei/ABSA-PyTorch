@@ -4,7 +4,7 @@
 # Copyright (C) 2018. All Rights Reserved.
 
 from sklearn import metrics
-from data_utils import ABSADatesetReader
+from data_utils import build_tokenizer, build_embedding_matrix, ABSADataset
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -20,11 +20,20 @@ class Instructor:
     def __init__(self, opt):
         self.opt = opt
 
-        absa_dataset = ABSADatesetReader(dataset=opt.dataset, embed_dim=opt.embed_dim, max_seq_len=opt.max_seq_len)
-        self.train_data_loader = DataLoader(dataset=absa_dataset.train_data, batch_size=opt.batch_size, shuffle=True)
-        self.test_data_loader = DataLoader(dataset=absa_dataset.test_data, batch_size=opt.batch_size, shuffle=False)
+        tokenizer = build_tokenizer(
+            fnames=[opt.dataset_file['train'], opt.dataset_file['test']],
+            max_seq_len=opt.max_seq_len,
+            dat_fname='{0}_tokenizer.dat'.format(opt.dataset))
+        embedding_matrix = build_embedding_matrix(
+            word2idx=tokenizer.word2idx,
+            embed_dim=opt.embed_dim,
+            dat_fname='{0}_{1}_embedding_matrix.dat'.format(str(opt.embed_dim), opt.dataset))
+        trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
+        testset = ABSADataset(opt.dataset_file['test'], tokenizer)
+        self.train_data_loader = DataLoader(dataset=trainset, batch_size=opt.batch_size, shuffle=True)
+        self.test_data_loader = DataLoader(dataset=testset, batch_size=opt.batch_size, shuffle=False)
 
-        self.model = opt.model_class(absa_dataset.embedding_matrix, opt).to(opt.device)
+        self.model = opt.model_class(embedding_matrix, opt).to(opt.device)
         if opt.device.type == 'cuda':
             print("cuda memory allocated:", torch.cuda.memory_allocated(device=opt.device.index))
         self._print_args()
@@ -178,6 +187,20 @@ if __name__ == '__main__':
         'tnet_lf': TNet_LF,
         'aoa': AOA,
     }
+    dataset_files = {
+        'twitter': {
+            'train': './datasets/acl-14-short-data/train.raw',
+            'test': './datasets/acl-14-short-data/test.raw'
+        },
+        'restaurant': {
+            'train': './datasets/semeval14/Restaurants_Train.xml.seg',
+            'test': './datasets/semeval14/Restaurants_Test_Gold.xml.seg'
+        },
+        'laptop': {
+            'train': './datasets/semeval14/Laptops_Train.xml.seg',
+            'test': './datasets/semeval14/Laptops_Test_Gold.xml.seg'
+        }
+    }
     input_colses = {
         'lstm': ['text_raw_indices'],
         'td_lstm': ['text_left_with_aspect_indices', 'text_right_with_aspect_indices'],
@@ -204,6 +227,7 @@ if __name__ == '__main__':
         'sgd': torch.optim.SGD,
     }
     opt.model_class = model_classes[opt.model_name]
+    opt.dataset_file = dataset_files[opt.dataset]
     opt.inputs_cols = input_colses[opt.model_name]
     opt.initializer = initializers[opt.initializer]
     opt.optimizer = optimizers[opt.optimizer]

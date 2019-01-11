@@ -39,7 +39,7 @@ Please refer to [infer_example.py](./infer_example.py).
 ### AOA ([aoa.py](./models/aoa.py))
 Huang, Binxuan, et al. "Aspect Level Sentiment Classification with Attention-over-Attention Neural Networks." arXiv preprint arXiv:1804.06536 (2018). [[pdf]](https://arxiv.org/pdf/1804.06536.pdf)
 
-<div align=center>![aoa](assets/aoa.png)
+![aoa](assets/aoa.png)
 
 ### TNet ([tnet_lf.py](./models/tnet_lf.py))
 Li, Xin, et al. "Transformation Networks for Target-Oriented Sentiment Classification." arXiv preprint arXiv:1805.01086 (2018). [[pdf]](https://arxiv.org/pdf/1805.01086)

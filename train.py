@@ -13,7 +13,7 @@ import argparse
 import math
 import os
 
-from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA
+from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN
 
 
 class Instructor:
@@ -186,6 +186,7 @@ if __name__ == '__main__':
         'cabasc': Cabasc,
         'tnet_lf': TNet_LF,
         'aoa': AOA,
+        'mgan': MGAN
     }
     dataset_files = {
         'twitter': {
@@ -210,7 +211,8 @@ if __name__ == '__main__':
         'ram': ['text_raw_indices', 'aspect_indices', 'text_left_indices'],
         'cabasc': ['text_raw_indices', 'aspect_indices', 'text_left_with_aspect_indices', 'text_right_with_aspect_indices'],
         'tnet_lf': ['text_raw_indices', 'aspect_indices', 'aspect_in_text'],
-        'aoa': ['text_raw_indices', 'aspect_indices']
+        'aoa': ['text_raw_indices', 'aspect_indices'],
+        'mgan': ['text_raw_indices', 'aspect_indices', 'text_left_indices']
     }
     initializers = {
         'xavier_uniform_': torch.nn.init.xavier_uniform_,

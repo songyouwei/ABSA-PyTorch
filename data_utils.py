@@ -10,7 +10,29 @@ import torch
 from torch.utils.data import Dataset
 
 
-def load_word_vec(path, word2idx=None):
+def build_tokenizer(fnames, max_seq_len, dat_fname):
+    if os.path.exists(dat_fname):
+        print('loading tokenizer:', dat_fname)
+        tokenizer = pickle.load(open(dat_fname, 'rb'))
+    else:
+        text = ''
+        for fname in fnames:
+            fin = open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
+            lines = fin.readlines()
+            fin.close()
+            for i in range(0, len(lines), 3):
+                text_left, _, text_right = [s.lower().strip() for s in lines[i].partition("$T$")]
+                aspect = lines[i + 1].lower().strip()
+                text_raw = text_left + " " + aspect + " " + text_right
+                text += text_raw + " "
+
+        tokenizer = Tokenizer(max_seq_len)
+        tokenizer.fit_on_text(text)
+        pickle.dump(tokenizer, open(dat_fname, 'wb'))
+    return tokenizer
+
+
+def _load_word_vec(path, word2idx=None):
     fin = open(path, 'r', encoding='utf-8', newline='\n', errors='ignore')
     word_vec = {}
     for line in fin:
@@ -20,32 +42,30 @@ def load_word_vec(path, word2idx=None):
     return word_vec
 
 
-def build_embedding_matrix(word2idx, embed_dim, type):
-    embedding_matrix_file_name = '{0}_{1}_embedding_matrix.dat'.format(str(embed_dim), type)
-    if os.path.exists(embedding_matrix_file_name):
-        print('loading embedding_matrix:', embedding_matrix_file_name)
-        embedding_matrix = pickle.load(open(embedding_matrix_file_name, 'rb'))
+def build_embedding_matrix(word2idx, embed_dim, dat_fname):
+    if os.path.exists(dat_fname):
+        print('loading embedding_matrix:', dat_fname)
+        embedding_matrix = pickle.load(open(dat_fname, 'rb'))
     else:
         print('loading word vectors...')
         embedding_matrix = np.zeros((len(word2idx) + 2, embed_dim))  # idx 0 and len(word2idx)+1 are all-zeros
         fname = './glove.twitter.27B/glove.twitter.27B.' + str(embed_dim) + 'd.txt' \
             if embed_dim != 300 else './glove.42B.300d.txt'
-        word_vec = load_word_vec(fname, word2idx=word2idx)
-        print('building embedding_matrix:', embedding_matrix_file_name)
+        word_vec = _load_word_vec(fname, word2idx=word2idx)
+        print('building embedding_matrix:', dat_fname)
         for word, i in word2idx.items():
             vec = word_vec.get(word)
             if vec is not None:
                 # words not found in embedding index will be all-zeros.
                 embedding_matrix[i] = vec
-        pickle.dump(embedding_matrix, open(embedding_matrix_file_name, 'wb'))
+        pickle.dump(embedding_matrix, open(dat_fname, 'wb'))
     return embedding_matrix
 
 
 class Tokenizer(object):
-    def __init__(self, lower=False, max_seq_len=None, max_aspect_len=None):
+    def __init__(self, max_seq_len, lower=True):
         self.lower = lower
         self.max_seq_len = max_seq_len
-        self.max_aspect_len = max_aspect_len
         self.word2idx = {}
         self.idx2word = {}
         self.idx = 1
@@ -61,7 +81,7 @@ class Tokenizer(object):
                 self.idx += 1
 
     @staticmethod
-    def pad_sequence(sequence, maxlen, dtype='int64', padding='pre', truncating='pre', value=0.):
+    def pad_sequence(sequence, maxlen, dtype='int64', padding='post', truncating='post', value=0.):
         x = (np.ones(maxlen) * value).astype(dtype)
         if truncating == 'pre':
             trunc = sequence[-maxlen:]
@@ -74,7 +94,7 @@ class Tokenizer(object):
             x[-len(trunc):] = trunc
         return x
 
-    def text_to_sequence(self, text, reverse=False):
+    def text_to_sequence(self, text, reverse=False, padding='post', truncating='post'):
         if self.lower:
             text = text.lower()
         words = text.split()
@@ -82,40 +102,13 @@ class Tokenizer(object):
         sequence = [self.word2idx[w] if w in self.word2idx else unknownidx for w in words]
         if len(sequence) == 0:
             sequence = [0]
-        pad_and_trunc = 'post'  # use post padding together with torch.nn.utils.rnn.pack_padded_sequence
         if reverse:
             sequence = sequence[::-1]
-        return Tokenizer.pad_sequence(sequence, self.max_seq_len, dtype='int64', padding=pad_and_trunc, truncating=pad_and_trunc)
+        return Tokenizer.pad_sequence(sequence, self.max_seq_len, padding=padding, truncating=truncating)
 
 
 class ABSADataset(Dataset):
-    def __init__(self, data):
-        self.data = data
-
-    def __getitem__(self, index):
-        return self.data[index]
-
-    def __len__(self):
-        return len(self.data)
-
-
-class ABSADatesetReader:
-    @staticmethod
-    def __read_text__(fnames):
-        text = ''
-        for fname in fnames:
-            fin = open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
-            lines = fin.readlines()
-            fin.close()
-            for i in range(0, len(lines), 3):
-                text_left, _, text_right = [s.lower().strip() for s in lines[i].partition("$T$")]
-                aspect = lines[i + 1].lower().strip()
-                text_raw = text_left + " " + aspect + " " + text_right
-                text += text_raw + " "
-        return text
-
-    @staticmethod
-    def __read_data__(fname, tokenizer):
+    def __init__(self, fname, tokenizer):
         fin = open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
         lines = fin.readlines()
         fin.close()
@@ -136,7 +129,7 @@ class ABSADatesetReader:
             left_context_len = np.sum(text_left_indices != 0)
             aspect_len = np.sum(aspect_indices != 0)
             aspect_in_text = torch.tensor([left_context_len.item(), (left_context_len + aspect_len - 1).item()])
-            polarity = int(polarity)+1
+            polarity = int(polarity) + 1
 
             data = {
                 'text_raw_indices': text_raw_indices,
@@ -151,28 +144,10 @@ class ABSADatesetReader:
             }
 
             all_data.append(data)
-        return all_data
+        self.data = all_data
 
-    def __init__(self, dataset='twitter', embed_dim=100, max_seq_len=40):
-        print("preparing {0} dataset...".format(dataset))
-        fname = {
-            'twitter': {
-                'train': './datasets/acl-14-short-data/train.raw',
-                'test': './datasets/acl-14-short-data/test.raw'
-            },
-            'restaurant': {
-                'train': './datasets/semeval14/Restaurants_Train.xml.seg',
-                'test': './datasets/semeval14/Restaurants_Test_Gold.xml.seg'
-            },
-            'laptop': {
-                'train': './datasets/semeval14/Laptops_Train.xml.seg',
-                'test': './datasets/semeval14/Laptops_Test_Gold.xml.seg'
-            }
-        }
-        text = ABSADatesetReader.__read_text__([fname[dataset]['train'], fname[dataset]['test']])
-        tokenizer = Tokenizer(max_seq_len=max_seq_len)
-        tokenizer.fit_on_text(text.lower())
-        self.tokenizer = tokenizer
-        self.embedding_matrix = build_embedding_matrix(tokenizer.word2idx, embed_dim, dataset)
-        self.train_data = ABSADataset(ABSADatesetReader.__read_data__(fname[dataset]['train'], tokenizer))
-        self.test_data = ABSADataset(ABSADatesetReader.__read_data__(fname[dataset]['test'], tokenizer))
+    def __getitem__(self, index):
+        return self.data[index]
+
+    def __len__(self):
+        return len(self.data)

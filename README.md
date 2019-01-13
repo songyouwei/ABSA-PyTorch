@@ -36,6 +36,11 @@ Please refer to [infer_example.py](./infer_example.py).
 
 ## Implemented models
 
+### MGAN ([mgan.py](./models/mgan.py))
+Fan, Feifan, et al. "Multi-grained Attention Network for Aspect-Level Sentiment Classification." Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing. 2018. [[pdf]](http://aclweb.org/anthology/D18-1380)
+
+![mgan](assets/mgan.png)
+
 ### AOA ([aoa.py](./models/aoa.py))
 Huang, Binxuan, et al. "Aspect Level Sentiment Classification with Attention-over-Attention Neural Networks." arXiv preprint arXiv:1804.06536 (2018). [[pdf]](https://arxiv.org/pdf/1804.06536.pdf)
 

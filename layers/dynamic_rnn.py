@@ -57,10 +57,10 @@ class DynamicLSTM(nn.Module):
         :return:
         """
         """sort"""
-        x_sort_idx = np.argsort(-x_len)
-        x_unsort_idx = torch.LongTensor(np.argsort(x_sort_idx))
+        x_sort_idx = torch.argsort(-x_len)
+        x_unsort_idx = torch.argsort(x_sort_idx).long()
         x_len = x_len[x_sort_idx]
-        x = x[torch.LongTensor(x_sort_idx)]
+        x = x[x_sort_idx.long()]
         """pack"""
         x_emb_p = torch.nn.utils.rnn.pack_padded_sequence(x, x_len, batch_first=self.batch_first)
         

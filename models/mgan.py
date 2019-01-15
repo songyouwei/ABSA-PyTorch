@@ -10,8 +10,8 @@ import torch.nn.functional as F
 
 class LocationEncoding(nn.Module):
     def __init__(self, opt):
-        super(LocationEncoding, self).__init__()
         self.opt = opt
+        super(LocationEncoding, self).__init__()
 
     def forward(self, x, pos_inx):
         batch_size, seq_len = x.size()[0], x.size()[1]
@@ -38,42 +38,20 @@ class LocationEncoding(nn.Module):
         weight = torch.tensor(weight)
         return weight
 
-class AlignmentMatrix(nn.Module):
-    def __init__(self, opt):
-        super(AlignmentMatrix, self).__init__()
-        self.opt = opt
-        self.w_u = nn.Parameter(torch.Tensor(6*opt.hidden_dim, 1))
-
-    def forward(self, batch_size, ctx, asp):
-        ctx_len = ctx.size(1)
-        asp_len = asp.size(1)
-        alignment_mat = torch.zeros(batch_size, ctx_len, asp_len).to(self.opt.device)
-        ctx_chunks = ctx.chunk(ctx_len, dim=1)
-        asp_chunks = asp.chunk(asp_len, dim=1)
-        for i, ctx_chunk in enumerate(ctx_chunks):
-            for j, asp_chunk in enumerate(asp_chunks):
-                feat = torch.cat([ctx_chunk, asp_chunk, ctx_chunk*asp_chunk], dim=2) # batch_size x 1 x 6*hidden_dim 
-                alignment_mat[:, i, j] = feat.matmul(self.w_u.expand(batch_size, -1, -1)).squeeze(-1).squeeze(-1) 
-        return alignment_mat
-
 class MGAN(nn.Module):
     def __init__(self, embedding_matrix, opt):
         super(MGAN, self).__init__()
         self.opt = opt
         self.embed = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix, dtype=torch.float))
         self.ctx_lstm = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
-        self.asp_lstm = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
         self.location = LocationEncoding(opt)
-        self.w_a2c = nn.Parameter(torch.Tensor(2*opt.hidden_dim, 2*opt.hidden_dim))
-        self.w_c2a = nn.Parameter(torch.Tensor(2*opt.hidden_dim, 2*opt.hidden_dim))
-        self.alignment = AlignmentMatrix(opt)
-        self.dense = nn.Linear(8*opt.hidden_dim, opt.polarities_dim)
+        self.asp_lstm = DynamicLSTM(opt.embed_dim, opt.hidden_dim, num_layers=1, batch_first=True, bidirectional=True)
+        self.dense = nn.Linear(8 * opt.hidden_dim, opt.polarities_dim)
 
     def forward(self, inputs):
         text_raw_indices = inputs[0] # batch_size x seq_len
         aspect_indices = inputs[1] 
         text_left_indices= inputs[2]
-        batch_size = text_raw_indices.size(0)
         ctx_len = torch.sum(text_raw_indices != 0, dim=1)
         asp_len = torch.sum(aspect_indices != 0, dim=1)
         left_len = torch.sum(text_left_indices != 0, dim=-1)
@@ -91,15 +69,13 @@ class MGAN(nn.Module):
         asp_pool = torch.sum(asp_out, dim=1)
         asp_pool = torch.div(asp_pool, asp_len.float().unsqueeze(-1)).unsqueeze(-1) # batch_size x 2*hidden_dim x 1
 
-        alignment_mat = self.alignment(batch_size, ctx_out, asp_out) # batch_size x (ctx)seq_len x (asp)seq_len
+        alignment_mat = torch.matmul(ctx_out, asp_out.transpose(1, 2)) # batch_size x (ctx)seq_len x (asp)seq_len
         # batch_size x 2*hidden_dim
         f_asp2ctx = torch.matmul(ctx_out.transpose(1, 2), F.softmax(alignment_mat.max(2, keepdim=True)[0], dim=1)).squeeze(-1)
         f_ctx2asp = torch.matmul(F.softmax(alignment_mat.max(1, keepdim=True)[0], dim=2), asp_out).transpose(1, 2).squeeze(-1) 
 
-        c_asp2ctx_alpha = F.softmax(ctx_out.matmul(self.w_a2c.expand(batch_size, -1, -1)).matmul(asp_pool), dim=1)
-        c_asp2ctx = torch.matmul(ctx_out.transpose(1, 2), c_asp2ctx_alpha).squeeze(-1)
-        c_ctx2asp_alpha = F.softmax(asp_out.matmul(self.w_c2a.expand(batch_size, -1, -1)).matmul(ctx_pool), dim=1)
-        c_ctx2asp = torch.matmul(asp_out.transpose(1, 2), c_ctx2asp_alpha).squeeze(-1)
+        c_asp2ctx = torch.matmul(ctx_out.transpose(1, 2), F.softmax(torch.matmul(ctx_out, asp_pool), dim=1)).squeeze(-1) 
+        c_ctx2asp = torch.matmul(asp_out.transpose(1, 2), F.softmax(torch.matmul(asp_out, ctx_pool), dim=1)).squeeze(-1)
 
         feat = torch.cat([c_asp2ctx, f_asp2ctx, f_ctx2asp, c_ctx2asp], dim=1)
         out = self.dense(feat) # bathc_size x polarity_dim

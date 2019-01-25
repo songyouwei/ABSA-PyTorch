@@ -57,10 +57,16 @@ class DynamicLSTM(nn.Module):
         :return:
         """
         """sort"""
-        x_sort_idx = torch.argsort(-x_len)
-        x_unsort_idx = torch.argsort(x_sort_idx).long()
-        x_len = x_len[x_sort_idx]
-        x = x[x_sort_idx.long()]
+        if torch.__version__.startswith('1'):
+            x_sort_idx = torch.argsort(-x_len).long()
+            x_unsort_idx = torch.argsort(x_sort_idx).long()
+            x_len = x_len[x_sort_idx]
+            x = x[x_sort_idx]
+        else:
+            x_sort_idx = torch.sort(-x_len)[1].long()
+            x_unsort_idx = torch.sort(x_sort_idx)[1].long()
+            x_len = x_len[x_sort_idx]
+            x = x[x_sort_idx]
         """pack"""
         x_emb_p = torch.nn.utils.rnn.pack_padded_sequence(x, x_len, batch_first=self.batch_first)
         

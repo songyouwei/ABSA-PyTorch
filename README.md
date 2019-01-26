@@ -8,7 +8,7 @@
 
 ## Requirement
 
-* PyTorch 0.4.0
+* PyTorch >= 0.4.0
 * NumPy 1.13.3
 * tensorboardX 1.2
 * Python 3.6

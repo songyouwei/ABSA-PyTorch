@@ -8,13 +8,14 @@
 
 ## Requirement
 
-* PyTorch >= 0.4.0
-* NumPy 1.13.3
+* pytorch >= 0.4.0
+* numpy 1.13.3
 * tensorboardX 1.2
-* Python 3.6
+* python 3.6
 * GloVe pre-trained word vectors (See `data_utils.py` for more detail)
   * Download pre-trained word vectors [here](https://github.com/stanfordnlp/GloVe#download-pre-trained-word-vectors),
   * extract the [glove.twitter.27B.zip](http://nlp.stanford.edu/data/wordvecs/glove.twitter.27B.zip) and [glove.42B.300d.zip](http://nlp.stanford.edu/data/wordvecs/glove.42B.300d.zip) to the root directory
+* pytorch-pretrained-bert 0.6.1
 
 ## Usage
 
@@ -35,6 +36,11 @@ tensorboard --logdir=./ian_logs
 Please refer to [infer_example.py](./infer_example.py).
 
 ## Implemented models
+
+### BERT for Sentence Pair Classification ([bert_basic.py](./models/bert_basic.py))
+Devlin, Jacob, et al. "Bert: Pre-training of deep bidirectional transformers for language understanding." arXiv preprint arXiv:1810.04805 (2018). [[pdf]](https://arxiv.org/pdf/1810.04805.pdf)
+
+![bert_basic](assets/bert_basic.png)
 
 ### MGAN ([mgan.py](./models/mgan.py))
 Fan, Feifan, et al. "Multi-grained Attention Network for Aspect-Level Sentiment Classification." Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing. 2018. [[pdf]](http://aclweb.org/anthology/D18-1380)

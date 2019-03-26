@@ -2,9 +2,8 @@
 # file: train.py
 # author: songyouwei <youwei0314@gmail.com>
 # Copyright (C) 2018. All Rights Reserved.
-
+from pytorch_pretrained_bert import BertModel
 from sklearn import metrics
-from data_utils import build_tokenizer, build_embedding_matrix, ABSADataset
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -14,26 +13,41 @@ import math
 import os
 
 from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN
+from models.bert_basic import BERT_basic
 
 
 class Instructor:
     def __init__(self, opt):
         self.opt = opt
 
-        tokenizer = build_tokenizer(
-            fnames=[opt.dataset_file['train'], opt.dataset_file['test']],
-            max_seq_len=opt.max_seq_len,
-            dat_fname='{0}_tokenizer.dat'.format(opt.dataset))
-        embedding_matrix = build_embedding_matrix(
-            word2idx=tokenizer.word2idx,
-            embed_dim=opt.embed_dim,
-            dat_fname='{0}_{1}_embedding_matrix.dat'.format(str(opt.embed_dim), opt.dataset))
-        trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
-        testset = ABSADataset(opt.dataset_file['test'], tokenizer)
-        self.train_data_loader = DataLoader(dataset=trainset, batch_size=opt.batch_size, shuffle=True)
-        self.test_data_loader = DataLoader(dataset=testset, batch_size=opt.batch_size, shuffle=False)
+        if 'bert' in opt.model_name:
+            from data_utils_BERT import Tokenizer, ABSADataset
+            tokenizer = Tokenizer(opt.max_seq_len)
+            bert = BertModel.from_pretrained('bert-base-uncased')
+            # freeze pretrained bert params
+            for param in bert.parameters():
+                param.requires_grad = False
+            trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
+            testset = ABSADataset(opt.dataset_file['test'], tokenizer)
+            self.train_data_loader = DataLoader(dataset=trainset, batch_size=opt.batch_size, shuffle=True)
+            self.test_data_loader = DataLoader(dataset=testset, batch_size=opt.batch_size, shuffle=False)
+            self.model = opt.model_class(bert, opt).to(opt.device)
+        else:
+            from data_utils import build_tokenizer, build_embedding_matrix, ABSADataset
+            tokenizer = build_tokenizer(
+                fnames=[opt.dataset_file['train'], opt.dataset_file['test']],
+                max_seq_len=opt.max_seq_len,
+                dat_fname='{0}_tokenizer.dat'.format(opt.dataset))
+            embedding_matrix = build_embedding_matrix(
+                word2idx=tokenizer.word2idx,
+                embed_dim=opt.embed_dim,
+                dat_fname='{0}_{1}_embedding_matrix.dat'.format(str(opt.embed_dim), opt.dataset))
+            trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
+            testset = ABSADataset(opt.dataset_file['test'], tokenizer)
+            self.train_data_loader = DataLoader(dataset=trainset, batch_size=opt.batch_size, shuffle=True)
+            self.test_data_loader = DataLoader(dataset=testset, batch_size=opt.batch_size, shuffle=False)
+            self.model = opt.model_class(embedding_matrix, opt).to(opt.device)
 
-        self.model = opt.model_class(embedding_matrix, opt).to(opt.device)
         if opt.device.type == 'cuda':
             print("cuda memory allocated:", torch.cuda.memory_allocated(device=opt.device.index))
         self._print_args()
@@ -170,6 +184,7 @@ if __name__ == '__main__':
     parser.add_argument('--logdir', default='log', type=str)
     parser.add_argument('--embed_dim', default=300, type=int)
     parser.add_argument('--hidden_dim', default=300, type=int)
+    parser.add_argument('--bert_dim', default=768, type=int)
     parser.add_argument('--max_seq_len', default=80, type=int)
     parser.add_argument('--polarities_dim', default=3, type=int)
     parser.add_argument('--hops', default=3, type=int)
@@ -186,7 +201,8 @@ if __name__ == '__main__':
         'cabasc': Cabasc,
         'tnet_lf': TNet_LF,
         'aoa': AOA,
-        'mgan': MGAN
+        'mgan': MGAN,
+        'bert_basic': BERT_basic,
     }
     dataset_files = {
         'twitter': {
@@ -212,7 +228,8 @@ if __name__ == '__main__':
         'cabasc': ['text_raw_indices', 'aspect_indices', 'text_left_with_aspect_indices', 'text_right_with_aspect_indices'],
         'tnet_lf': ['text_raw_indices', 'aspect_indices', 'aspect_in_text'],
         'aoa': ['text_raw_indices', 'aspect_indices'],
-        'mgan': ['text_raw_indices', 'aspect_indices', 'text_left_indices']
+        'mgan': ['text_raw_indices', 'aspect_indices', 'text_left_indices'],
+        'bert_basic': ['text_bert_indices', 'bert_segments_ids'],
     }
     initializers = {
         'xavier_uniform_': torch.nn.init.xavier_uniform_,

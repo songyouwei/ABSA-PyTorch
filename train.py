@@ -12,6 +12,8 @@ import argparse
 import math
 import os
 
+from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, ABSADataset
+
 from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN
 from models.bert_basic import BERT_basic
 
@@ -21,19 +23,13 @@ class Instructor:
         self.opt = opt
 
         if 'bert' in opt.model_name:
-            from data_utils_BERT import Tokenizer, ABSADataset
-            tokenizer = Tokenizer(opt.max_seq_len)
+            tokenizer = Tokenizer4Bert(opt.max_seq_len)
             bert = BertModel.from_pretrained('bert-base-uncased')
             # freeze pretrained bert params
             for param in bert.parameters():
                 param.requires_grad = False
-            trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
-            testset = ABSADataset(opt.dataset_file['test'], tokenizer)
-            self.train_data_loader = DataLoader(dataset=trainset, batch_size=opt.batch_size, shuffle=True)
-            self.test_data_loader = DataLoader(dataset=testset, batch_size=opt.batch_size, shuffle=False)
             self.model = opt.model_class(bert, opt).to(opt.device)
         else:
-            from data_utils import build_tokenizer, build_embedding_matrix, ABSADataset
             tokenizer = build_tokenizer(
                 fnames=[opt.dataset_file['train'], opt.dataset_file['test']],
                 max_seq_len=opt.max_seq_len,
@@ -42,11 +38,12 @@ class Instructor:
                 word2idx=tokenizer.word2idx,
                 embed_dim=opt.embed_dim,
                 dat_fname='{0}_{1}_embedding_matrix.dat'.format(str(opt.embed_dim), opt.dataset))
-            trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
-            testset = ABSADataset(opt.dataset_file['test'], tokenizer)
-            self.train_data_loader = DataLoader(dataset=trainset, batch_size=opt.batch_size, shuffle=True)
-            self.test_data_loader = DataLoader(dataset=testset, batch_size=opt.batch_size, shuffle=False)
             self.model = opt.model_class(embedding_matrix, opt).to(opt.device)
+
+        trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
+        testset = ABSADataset(opt.dataset_file['test'], tokenizer)
+        self.train_data_loader = DataLoader(dataset=trainset, batch_size=opt.batch_size, shuffle=True)
+        self.test_data_loader = DataLoader(dataset=testset, batch_size=opt.batch_size, shuffle=False)
 
         if opt.device.type == 'cuda':
             print("cuda memory allocated:", torch.cuda.memory_allocated(device=opt.device.index))

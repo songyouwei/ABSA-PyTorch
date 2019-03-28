@@ -23,8 +23,8 @@ class Instructor:
         self.opt = opt
 
         if 'bert' in opt.model_name:
-            tokenizer = Tokenizer4Bert(opt.max_seq_len)
-            bert = BertModel.from_pretrained('bert-base-uncased')
+            tokenizer = Tokenizer4Bert(opt.max_seq_len, opt.pretrained_bert_name)
+            bert = BertModel.from_pretrained(opt.pretrained_bert_name)
             # freeze pretrained bert params
             for param in bert.parameters():
                 param.requires_grad = False
@@ -63,13 +63,15 @@ class Instructor:
             print('>>> {0}: {1}'.format(arg, getattr(self.opt, arg)))
 
     def _reset_params(self):
-        for p in self.model.parameters():
-            if p.requires_grad:
-                if len(p.shape) > 1:
-                    self.opt.initializer(p)
-                else:
-                    stdv = 1. / math.sqrt(p.shape[0])
-                    torch.nn.init.uniform_(p, a=-stdv, b=stdv)
+        for child in self.model.children():
+            if type(child) != BertModel:  # skip bert params (with unfreezed bert)
+                for p in child.parameters():
+                    if p.requires_grad:
+                        if len(p.shape) > 1:
+                            self.opt.initializer(p)
+                        else:
+                            stdv = 1. / math.sqrt(p.shape[0])
+                            torch.nn.init.uniform_(p, a=-stdv, b=stdv)
 
     def _train(self, criterion, optimizer, max_test_acc_overall=0):
         writer = SummaryWriter(log_dir=self.opt.logdir)
@@ -182,6 +184,7 @@ if __name__ == '__main__':
     parser.add_argument('--embed_dim', default=300, type=int)
     parser.add_argument('--hidden_dim', default=300, type=int)
     parser.add_argument('--bert_dim', default=768, type=int)
+    parser.add_argument('--pretrained_bert_name', default='bert-base-uncased', type=str)
     parser.add_argument('--max_seq_len', default=80, type=int)
     parser.add_argument('--polarities_dim', default=3, type=int)
     parser.add_argument('--hops', default=3, type=int)

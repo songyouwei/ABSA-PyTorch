@@ -37,10 +37,10 @@ Please refer to [infer_example.py](./infer_example.py).
 
 ## Implemented models
 
-### BERT for Sentence Pair Classification ([bert_basic.py](./models/bert_basic.py))
+### BERT for Sentence Pair Classification ([bert_spc.py](./models/bert_spc.py))
 Devlin, Jacob, et al. "Bert: Pre-training of deep bidirectional transformers for language understanding." arXiv preprint arXiv:1810.04805 (2018). [[pdf]](https://arxiv.org/pdf/1810.04805.pdf)
 
-![bert_basic](assets/bert_basic.png)
+![bert_spc](assets/bert_spc.png)
 
 ### MGAN ([mgan.py](./models/mgan.py))
 Fan, Feifan, et al. "Multi-grained Attention Network for Aspect-Level Sentiment Classification." Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing. 2018. [[pdf]](http://aclweb.org/anthology/D18-1380)

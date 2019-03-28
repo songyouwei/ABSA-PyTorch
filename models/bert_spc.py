@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-# file: BERT_basic.py
+# file: BERT_SPC.py
 # author: songyouwei <youwei0314@gmail.com>
 # Copyright (C) 2019. All Rights Reserved.
 import torch.nn as nn
 
 
-class BERT_basic(nn.Module):
+class BERT_SPC(nn.Module):
     def __init__(self, bert, opt):
-        super(BERT_basic, self).__init__()
+        super(BERT_SPC, self).__init__()
         self.bert = bert
         self.dropout = nn.Dropout(opt.dropout)
         self.dense = nn.Linear(opt.bert_dim, opt.polarities_dim)

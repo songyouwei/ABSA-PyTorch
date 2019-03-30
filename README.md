@@ -37,6 +37,11 @@ Please refer to [infer_example.py](./infer_example.py).
 
 ## Implemented models
 
+### AEN / AEN-BERT ([aen.py](./models/aen.py))
+Song, Youwei, et al. "Attentional Encoder Network for Targeted Sentiment Classification." arXiv preprint arXiv:1902.09314 (2019). [[pdf]](https://arxiv.org/pdf/1902.09314.pdf)
+
+![aen](assets/aen.png)
+
 ### BERT for Sentence Pair Classification ([bert_spc.py](./models/bert_spc.py))
 Devlin, Jacob, et al. "Bert: Pre-training of deep bidirectional transformers for language understanding." arXiv preprint arXiv:1810.04805 (2018). [[pdf]](https://arxiv.org/pdf/1810.04805.pdf)
 

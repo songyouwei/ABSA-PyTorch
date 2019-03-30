@@ -15,6 +15,7 @@ import os
 from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, ABSADataset
 
 from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN
+from models.aen import CrossEntropyLoss_LSR, AEN, AEN_BERT
 from models.bert_spc import BERT_SPC
 
 
@@ -203,6 +204,8 @@ if __name__ == '__main__':
         'aoa': AOA,
         'mgan': MGAN,
         'bert_spc': BERT_SPC,
+        'aen': AEN,
+        'aen_bert': AEN_BERT,
     }
     dataset_files = {
         'twitter': {
@@ -230,6 +233,8 @@ if __name__ == '__main__':
         'aoa': ['text_raw_indices', 'aspect_indices'],
         'mgan': ['text_raw_indices', 'aspect_indices', 'text_left_indices'],
         'bert_spc': ['text_bert_indices', 'bert_segments_ids'],
+        'aen': ['text_raw_indices', 'aspect_indices'],
+        'aen_bert' : ['text_raw_indices', 'aspect_indices'],
     }
     initializers = {
         'xavier_uniform_': torch.nn.init.xavier_uniform_,

@@ -26,8 +26,8 @@ class Instructor:
             tokenizer = Tokenizer4Bert(opt.max_seq_len, opt.pretrained_bert_name)
             bert = BertModel.from_pretrained(opt.pretrained_bert_name)
             # freeze pretrained bert params
-            for param in bert.parameters():
-                param.requires_grad = False
+            # for param in bert.parameters():
+            #     param.requires_grad = False
             self.model = opt.model_class(bert, opt).to(opt.device)
         else:
             tokenizer = build_tokenizer(
@@ -174,11 +174,11 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', default='twitter', type=str, help='twitter, restaurant, laptop')
     parser.add_argument('--optimizer', default='adam', type=str)
     parser.add_argument('--initializer', default='xavier_uniform_', type=str)
-    parser.add_argument('--learning_rate', default=0.001, type=float)
-    parser.add_argument('--dropout', default=0, type=float)
-    parser.add_argument('--l2reg', default=0.00001, type=float)
+    parser.add_argument('--learning_rate', default=2e-5, type=float)  # try 5e-5, 3e-5, 2e-5 for BERT models (sensitive)
+    parser.add_argument('--dropout', default=0.1, type=float)
+    parser.add_argument('--l2reg', default=0.01, type=float)
     parser.add_argument('--num_epoch', default=20, type=int)
-    parser.add_argument('--batch_size', default=128, type=int)
+    parser.add_argument('--batch_size', default=64, type=int)  # try 16, 32, 64 for BERT models
     parser.add_argument('--log_step', default=5, type=int)
     parser.add_argument('--logdir', default='log', type=str)
     parser.add_argument('--embed_dim', default=300, type=int)
@@ -254,4 +254,4 @@ if __name__ == '__main__':
         if opt.device is None else torch.device(opt.device)
 
     ins = Instructor(opt)
-    ins.run(5)
+    ins.run(1)  # _reset_params in every repeat

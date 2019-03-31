@@ -234,7 +234,7 @@ if __name__ == '__main__':
         'mgan': ['text_raw_indices', 'aspect_indices', 'text_left_indices'],
         'bert_spc': ['text_bert_indices', 'bert_segments_ids'],
         'aen': ['text_raw_indices', 'aspect_indices'],
-        'aen_bert' : ['text_raw_indices', 'aspect_indices'],
+        'aen_bert' : ['text_raw_bert_indices', 'aspect_bert_indices'],
     }
     initializers = {
         'xavier_uniform_': torch.nn.init.xavier_uniform_,

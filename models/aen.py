@@ -88,6 +88,7 @@ class AEN_BERT(nn.Module):
         self.opt = opt
         self.bert = bert
         self.squeeze_embedding = SqueezeEmbedding()
+        self.dropout = nn.Dropout(opt.dropout)
 
         self.attn_k = Attention(opt.bert_dim, out_dim=opt.hidden_dim, n_head=8, score_function='mlp', dropout=opt.dropout)
         self.attn_q = Attention(opt.bert_dim, out_dim=opt.hidden_dim, n_head=8, score_function='mlp', dropout=opt.dropout)
@@ -99,13 +100,15 @@ class AEN_BERT(nn.Module):
         self.dense = nn.Linear(opt.hidden_dim*3, opt.polarities_dim)
 
     def forward(self, inputs):
-        text_raw_indices, target_indices = inputs[0], inputs[1]
-        context_len = torch.sum(text_raw_indices != 0, dim=-1)
-        target_len = torch.sum(target_indices != 0, dim=-1)
-        context, _ = self.bert(text_raw_indices, output_all_encoded_layers=False)
+        context, target = inputs[0], inputs[1]
+        context_len = torch.sum(context != 0, dim=-1)
+        target_len = torch.sum(target != 0, dim=-1)
         context = self.squeeze_embedding(context, context_len)
-        target, _ = self.bert(target_indices, output_all_encoded_layers=False)
+        context, _ = self.bert(context, output_all_encoded_layers=False)
+        context = self.dropout(context)
         target = self.squeeze_embedding(target, target_len)
+        target, _ = self.bert(target, output_all_encoded_layers=False)
+        target = self.dropout(target)
 
         hc, _ = self.attn_k(context, context)
         hc = self.ffn_c(hc)

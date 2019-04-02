@@ -4,38 +4,49 @@
 >
 > 基于方面的情感分析，使用PyTorch实现。
 
-![Packagist](https://img.shields.io/packagist/l/doctrine/orm.svg) ![PRsWelcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
+![LICENSE](https://img.shields.io/packagist/l/doctrine/orm.svg)
+![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)
+[![GitHub stars](https://img.shields.io/github/stars/songyouwei/ABSA-PyTorch.svg?logo=github)](https://github.com/songyouwei/ABSA-PyTorch/stargazers)
 
 ## Requirement
 
 * pytorch >= 0.4.0
-* numpy 1.13.3
-* tensorboardX 1.2
-* python 3.6
-* GloVe pre-trained word vectors (See `data_utils.py` for more detail)
+* numpy >= 1.13.3
+* tensorboardX >= 1.2
+* python 3.6 / 3.7
+* GloVe pre-trained word vectors (See [data_utils.py](./data_utils.py) for more detail)
   * Download pre-trained word vectors [here](https://github.com/stanfordnlp/GloVe#download-pre-trained-word-vectors),
   * extract the [glove.twitter.27B.zip](http://nlp.stanford.edu/data/wordvecs/glove.twitter.27B.zip) and [glove.42B.300d.zip](http://nlp.stanford.edu/data/wordvecs/glove.42B.300d.zip) to the root directory
 * pytorch-pretrained-bert 0.6.1
+  * See [pytorch-pretrained-BERT](https://github.com/huggingface/pytorch-pretrained-BERT) for more detail.
 
 ## Usage
 
 ### Training
 
 ```sh
-python train.py --model_name ian --dataset twitter --logdir ian_logs
+python train.py --model_name bert_spc --dataset restaurant --logdir bert_spc_logs
 ```
+
+See [train.py](./train.py) for more detail.
 
 #### See the training process (needs to install TensorFlow)
 
 ```sh
-tensorboard --logdir=./ian_logs
+tensorboard --logdir=./bert_spc_logs
 ```
 
 ### Inference
 
 Please refer to [infer_example.py](./infer_example.py).
 
-## Implemented models
+### Tips
+
+* BERT-based models are more sensitive to hyperparameters (especially learning rate) on small data sets, see [this issue](https://github.com/songyouwei/ABSA-PyTorch/issues/27).
+* Fine-tuning on the specific task is necessary for releasing the true power of BERT.
+* Non-RNN models squeezed with [squeeze_embedding.py](./layers/squeeze_embedding.py) can be trained with larger batch size.
+
+## BERT-based models
 
 ### AEN / AEN-BERT ([aen.py](./models/aen.py))
 Song, Youwei, et al. "Attentional Encoder Network for Targeted Sentiment Classification." arXiv preprint arXiv:1902.09314 (2019). [[pdf]](https://arxiv.org/pdf/1902.09314.pdf)
@@ -46,6 +57,9 @@ Song, Youwei, et al. "Attentional Encoder Network for Targeted Sentiment Classif
 Devlin, Jacob, et al. "Bert: Pre-training of deep bidirectional transformers for language understanding." arXiv preprint arXiv:1810.04805 (2018). [[pdf]](https://arxiv.org/pdf/1810.04805.pdf)
 
 ![bert_spc](assets/bert_spc.png)
+
+
+## Non-BERT-based models
 
 ### MGAN ([mgan.py](./models/mgan.py))
 Fan, Feifan, et al. "Multi-grained Attention Network for Aspect-Level Sentiment Classification." Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing. 2018. [[pdf]](http://aclweb.org/anthology/D18-1380)

@@ -6,7 +6,7 @@
 
 ![LICENSE](https://img.shields.io/packagist/l/doctrine/orm.svg)
 ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)
-[![GitHub stars](https://img.shields.io/github/stars/songyouwei/ABSA-PyTorch.svg?logo=github)](https://github.com/songyouwei/ABSA-PyTorch/stargazers)
+[![Gitter](https://badges.gitter.im/ABSA-PyTorch/community.svg)](https://gitter.im/ABSA-PyTorch/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ## Requirement
 

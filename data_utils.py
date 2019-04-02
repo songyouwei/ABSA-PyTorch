@@ -150,9 +150,14 @@ class ABSADataset(Dataset):
             bert_segments_ids = np.asarray([0] * (np.sum(text_raw_indices != 0) + 2) + [1] * (aspect_len + 1))
             bert_segments_ids = pad_and_truncate(bert_segments_ids, tokenizer.max_seq_len)
 
+            text_raw_bert_indices = tokenizer.text_to_sequence("[CLS] " + text_left + " " + aspect + " " + text_right + " [SEP]")
+            aspect_bert_indices = tokenizer.text_to_sequence("[CLS] " + aspect + " [SEP]")
+
             data = {
                 'text_bert_indices': text_bert_indices,
                 'bert_segments_ids': bert_segments_ids,
+                'text_raw_bert_indices': text_raw_bert_indices,
+                'aspect_bert_indices': aspect_bert_indices,
                 'text_raw_indices': text_raw_indices,
                 'text_raw_without_aspect_indices': text_raw_without_aspect_indices,
                 'text_left_indices': text_left_indices,

@@ -8,6 +8,7 @@ import pickle
 import numpy as np
 import torch
 from torch.utils.data import Dataset
+from pytorch_pretrained_bert import BertTokenizer
 
 
 def build_tokenizer(fnames, max_seq_len, dat_fname):
@@ -62,6 +63,20 @@ def build_embedding_matrix(word2idx, embed_dim, dat_fname):
     return embedding_matrix
 
 
+def pad_and_truncate(sequence, maxlen, dtype='int64', padding='post', truncating='post', value=0):
+    x = (np.ones(maxlen) * value).astype(dtype)
+    if truncating == 'pre':
+        trunc = sequence[-maxlen:]
+    else:
+        trunc = sequence[:maxlen]
+    trunc = np.asarray(trunc, dtype=dtype)
+    if padding == 'post':
+        x[:len(trunc)] = trunc
+    else:
+        x[-len(trunc):] = trunc
+    return x
+
+
 class Tokenizer(object):
     def __init__(self, max_seq_len, lower=True):
         self.lower = lower
@@ -80,20 +95,6 @@ class Tokenizer(object):
                 self.idx2word[self.idx] = word
                 self.idx += 1
 
-    @staticmethod
-    def pad_sequence(sequence, maxlen, dtype='int64', padding='post', truncating='post', value=0.):
-        x = (np.ones(maxlen) * value).astype(dtype)
-        if truncating == 'pre':
-            trunc = sequence[-maxlen:]
-        else:
-            trunc = sequence[:maxlen]
-        trunc = np.asarray(trunc, dtype=dtype)
-        if padding == 'post':
-            x[:len(trunc)] = trunc
-        else:
-            x[-len(trunc):] = trunc
-        return x
-
     def text_to_sequence(self, text, reverse=False, padding='post', truncating='post'):
         if self.lower:
             text = text.lower()
@@ -104,7 +105,21 @@ class Tokenizer(object):
             sequence = [0]
         if reverse:
             sequence = sequence[::-1]
-        return Tokenizer.pad_sequence(sequence, self.max_seq_len, padding=padding, truncating=truncating)
+        return pad_and_truncate(sequence, self.max_seq_len, padding=padding, truncating=truncating)
+
+
+class Tokenizer4Bert:
+    def __init__(self, max_seq_len, pretrained_bert_name):
+        self.tokenizer = BertTokenizer.from_pretrained(pretrained_bert_name)
+        self.max_seq_len = max_seq_len
+
+    def text_to_sequence(self, text, reverse=False, padding='post', truncating='post'):
+        sequence = self.tokenizer.convert_tokens_to_ids(self.tokenizer.tokenize(text))
+        if len(sequence) == 0:
+            sequence = [0]
+        if reverse:
+            sequence = sequence[::-1]
+        return pad_and_truncate(sequence, self.max_seq_len, padding=padding, truncating=truncating)
 
 
 class ABSADataset(Dataset):
@@ -131,7 +146,18 @@ class ABSADataset(Dataset):
             aspect_in_text = torch.tensor([left_context_len.item(), (left_context_len + aspect_len - 1).item()])
             polarity = int(polarity) + 1
 
+            text_bert_indices = tokenizer.text_to_sequence('[CLS] ' + text_left + " " + aspect + " " + text_right + ' [SEP] ' + aspect + " [SEP]")
+            bert_segments_ids = np.asarray([0] * (np.sum(text_raw_indices != 0) + 2) + [1] * (aspect_len + 1))
+            bert_segments_ids = pad_and_truncate(bert_segments_ids, tokenizer.max_seq_len)
+
+            text_raw_bert_indices = tokenizer.text_to_sequence("[CLS] " + text_left + " " + aspect + " " + text_right + " [SEP]")
+            aspect_bert_indices = tokenizer.text_to_sequence("[CLS] " + aspect + " [SEP]")
+
             data = {
+                'text_bert_indices': text_bert_indices,
+                'bert_segments_ids': bert_segments_ids,
+                'text_raw_bert_indices': text_raw_bert_indices,
+                'aspect_bert_indices': aspect_bert_indices,
                 'text_raw_indices': text_raw_indices,
                 'text_raw_without_aspect_indices': text_raw_without_aspect_indices,
                 'text_left_indices': text_left_indices,

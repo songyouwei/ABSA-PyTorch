@@ -14,9 +14,17 @@ class MemNet(nn.Module):
     
     def locationed_memory(self, memory, memory_len):
         # here we just simply calculate the location vector in Model2's manner
-        for i in range(memory.size(0)):
+        batch_size = memory.shape[0]
+        seq_len = memory.shape[1]
+        memory_len = memory_len.cpu().numpy()
+        weight = [[] for i in range(batch_size)]
+        for i in range(batch_size):
             for idx in range(memory_len[i]):
-                memory[i][idx] *= (1-float(idx)/int(memory_len[i]))
+                weight[i].append(1-float(idx+1)/memory_len[i])
+            for idx in range(memory_len[i], seq_len):
+                weight[i].append(1)
+        weight = torch.tensor(weight).to(self.opt.device)
+        memory = weight.unsqueeze(2)*memory
         return memory
 
     def __init__(self, embedding_matrix, opt):

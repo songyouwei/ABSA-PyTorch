@@ -12,6 +12,7 @@ import itertools
 import argparse
 import math
 import os
+import random
 
 from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, ABSADataset
 
@@ -45,7 +46,10 @@ class CrossVal:
         dataset = ABSADataset(opt.dataset_file['train'], tokenizer)
         datalen = len(dataset)
         dataset = [dataset[i*datalen//opt.fold:(i+1)*datalen//opt.fold] for i in range(opt.fold)]
+        
         self.dataset = [(list(itertools.chain.from_iterable(dataset[:i]+dataset[i+1:])), dataset[i]) for i in range(opt.fold)]
+        if opt.shuffle:
+            random.shuffle(self.dataset)
 
         if opt.device.type == 'cuda':
             print("cuda memory allocated:", torch.cuda.memory_allocated(device=opt.device.index))
@@ -186,6 +190,7 @@ if __name__ == '__main__':
     parser.add_argument('--polarities_dim', default=3, type=int)
     parser.add_argument('--hops', default=3, type=int)
     parser.add_argument('--fold', default=10, type=int)
+    parser.add_argument('--shuffle', default=True, type=bool)
     parser.add_argument('--device', default=None, type=str)
     opt = parser.parse_args()
 

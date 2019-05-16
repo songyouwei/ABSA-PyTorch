@@ -3,6 +3,7 @@
 # author: gene_zc <gene_zhangchen@163.com>
 # Copyright (C) 2018. All Rights Reserved.
 from pytorch_pretrained_bert import BertModel
+from sklearn import metrics
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -12,7 +13,6 @@ import argparse
 import math
 import os
 import random
-import numpy as np
 
 from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, ABSADataset
 
@@ -81,7 +81,8 @@ class CrossVal:
 
     def _train(self, criterion, optimizer, fold_idx):
         writer = SummaryWriter(log_dir=self.opt.logdir)
-        val_loss_list = []
+        max_test_acc = 0
+        max_f1 = 0
         global_step = 0
         train_data, val_data = self.dataset[fold_idx]
         train_data_loader = DataLoader(dataset=train_data, batch_size=self.opt.batch_size, shuffle=True)
@@ -89,6 +90,7 @@ class CrossVal:
         for epoch in range(self.opt.num_epoch):
             print('>' * 100)
             print('epoch: ', epoch)
+            n_correct, n_total = 0, 0
             for i_batch, sample_batched in enumerate(train_data_loader):
                 global_step += 1
 
@@ -105,59 +107,66 @@ class CrossVal:
                 optimizer.step()
 
                 if global_step % self.opt.log_step == 0:
+                    n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
+                    n_total += len(outputs)
+                    train_acc = n_correct / n_total
 
                     # switch model to evaluation mode
                     self.model.eval()
-                    val_loss = self._evaluate_loss(criterion, val_data_loader)
-                    val_loss_list.append(val_loss)
+                    test_acc, f1 = self._evaluate_acc_f1(val_data_loader)
+                    if test_acc > max_test_acc:
+                        max_test_acc = test_acc
+                        if not os.path.exists('state_dict'):
+                            os.mkdir('state_dict')
+                        path = 'state_dict/{0}_{1}_acc{2}'.format(self.opt.model_name, self.opt.dataset, round(test_acc, 4))
+                        torch.save(self.model.state_dict(), path)
+                        print('>> saved: ' + path)
+                    if f1 > max_f1:
+                        max_f1 = f1
 
-                    writer.add_scalar('train_loss', loss, global_step)
-                    writer.add_scalar('val_loss', val_loss, global_step)
-                    print('train_loss: {:.4f}, val_loss: {:.4f}'.format(loss.item(), val_loss))
+                    writer.add_scalar('loss', loss, global_step)
+                    writer.add_scalar('acc', train_acc, global_step)
+                    writer.add_scalar('test_acc', test_acc, global_step)
+                    print('loss: {:.4f}, acc: {:.4f}, test_acc: {:.4f}, f1: {:.4f}'.format(loss.item(), train_acc, test_acc, f1))
 
         writer.close()
-        return np.mean(val_loss_list)
+        return max_test_acc, max_f1
 
-    def _evaluate_loss(self, criterion, data_loader):
-        v_loss_total = 0
-        n_val_total = 0
+    def _evaluate_acc_f1(self, data_loader):
+        n_test_correct, n_test_total = 0, 0
+        t_targets_all, t_outputs_all = None, None
         with torch.no_grad():
-            for v_batch, v_sample_batched in enumerate(data_loader):
-                v_inputs = [v_sample_batched[col].to(opt.device) for col in self.opt.inputs_cols]
-                v_targets = v_sample_batched['polarity'].to(opt.device)
-                v_outputs = self.model(v_inputs)
+            for t_batch, t_sample_batched in enumerate(data_loader):
+                t_inputs = [t_sample_batched[col].to(opt.device) for col in self.opt.inputs_cols]
+                t_targets = t_sample_batched['polarity'].to(opt.device)
+                t_outputs = self.model(t_inputs)
 
-                v_loss = criterion(v_outputs, v_targets)
-                v_loss_total += v_loss.item()
-                n_val_total += len(v_outputs)
+                n_test_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()
+                n_test_total += len(t_outputs)
 
-        val_loss = v_loss_total / n_val_total
-        return val_loss
+                if t_targets_all is None:
+                    t_targets_all = t_targets
+                    t_outputs_all = t_outputs
+                else:
+                    t_targets_all = torch.cat((t_targets_all, t_targets), dim=0)
+                    t_outputs_all = torch.cat((t_outputs_all, t_outputs), dim=0)
 
-    def run(self, repeats=5):
+        test_acc = n_test_correct / n_test_total
+        f1 = metrics.f1_score(t_targets_all.cpu(), torch.argmax(t_outputs_all, -1).cpu(), labels=[0, 1, 2], average='macro')
+        return test_acc, f1
+
+    def run(self):
         # Loss and Optimizer
         criterion = nn.CrossEntropyLoss()
         _params = filter(lambda p: p.requires_grad, self.model.parameters())
         optimizer = self.opt.optimizer(_params, lr=self.opt.learning_rate, weight_decay=self.opt.l2reg)
+        
+        for i in range(self.opt.fold):
+            print('fold: '+str(i+1))
+            self._reset_params()
+            max_test_acc, max_f1 = self._train(criterion, optimizer, i)
+            print('max_test_acc: {0}     max_f1: {1}'.format(max_test_acc, max_f1))
 
-        best_val_loss = float('inf')
-        for r in range(repeats):
-            print('repeat: '+str(r+1))
-            fold_avg_val_losses = []
-            for i in range(self.opt.fold):
-                print('fold: '+str(i+1))
-                self._reset_params()
-                fold_avg_val_loss = self._train(criterion, optimizer, i)
-                fold_avg_val_losses.append(fold_avg_val_loss)
-                print('avg_val_loss: {0}'.format(fold_avg_val_loss))
-            val_loss = np.mean(fold_avg_val_losses)
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                if not os.path.exists('state_dict'):
-                    os.mkdir('state_dict')
-                path = 'state_dict/{0}_{1}_acc{2}'.format(self.opt.model_name, self.opt.dataset, round(val_loss, 4))
-                torch.save(self.model.state_dict(), path)
-                print('>> saved: ' + path)
 
 if __name__ == '__main__':
     # Hyper Parameters

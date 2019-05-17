@@ -104,16 +104,14 @@ class CrossVal:
                 loss.backward()
                 optimizer.step()
 
-                if global_step % self.opt.log_step == 0:
+            # switch model to evaluation mode
+            self.model.eval()
+            val_loss = self._evaluate_loss(criterion, val_data_loader)
+            val_loss_list.append(val_loss)
 
-                    # switch model to evaluation mode
-                    self.model.eval()
-                    val_loss = self._evaluate_loss(criterion, val_data_loader)
-                    val_loss_list.append(val_loss)
-
-                    writer.add_scalar('train_loss', loss, global_step)
-                    writer.add_scalar('val_loss', val_loss, global_step)
-                    print('train_loss: {:.4f}, val_loss: {:.4f}'.format(loss.item(), val_loss))
+            writer.add_scalar('train_loss', loss, global_step)
+            writer.add_scalar('val_loss', val_loss, global_step)
+            print('train_loss: {:.4f}, val_loss: {:.4f}'.format(loss.item(), val_loss))
 
         writer.close()
         return np.mean(val_loss_list)
@@ -128,7 +126,7 @@ class CrossVal:
                 v_outputs = self.model(v_inputs)
 
                 v_loss = criterion(v_outputs, v_targets)
-                v_loss_total += v_loss.item()
+                v_loss_total += v_loss.item() * len(v_outputs)
                 n_val_total += len(v_outputs)
 
         val_loss = v_loss_total / n_val_total
@@ -155,7 +153,7 @@ class CrossVal:
                 best_val_loss = val_loss
                 if not os.path.exists('state_dict'):
                     os.mkdir('state_dict')
-                path = 'state_dict/{0}_{1}_acc{2}'.format(self.opt.model_name, self.opt.dataset, round(val_loss, 4))
+                path = 'state_dict/{0}_{1}_val_loss{2}'.format(self.opt.model_name, self.opt.dataset, round(val_loss, 4))
                 torch.save(self.model.state_dict(), path)
                 print('>> saved: ' + path)
 

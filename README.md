@@ -29,6 +29,8 @@ python train.py --model_name bert_spc --dataset restaurant
 
 See [train.py](./train.py) for more training arguments.
 
+Refer to [train_k_fold_cross_val.py](./train_k_fold_cross_val.py) for k-fold cross validation support.
+
 ### Inference
 
 Please refer to [infer_example.py](./infer_example.py).

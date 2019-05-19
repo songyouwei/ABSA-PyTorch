@@ -38,7 +38,7 @@ class CrossEntropyLoss_LSR(nn.Module):
             return torch.sum(loss)
 
 
-class AEN(nn.Module):
+class AEN_GloVe(nn.Module):
     def __init__(self, embedding_matrix, opt):
         super(AEN, self).__init__()
         self.opt = opt

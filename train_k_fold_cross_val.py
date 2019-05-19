@@ -21,7 +21,7 @@ from torch.utils.data import DataLoader, random_split, ConcatDataset
 from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, ABSADataset
 
 from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN
-from models.aen import CrossEntropyLoss_LSR, AEN, AEN_BERT
+from models.aen import CrossEntropyLoss_LSR, AEN_BERT
 from models.bert_spc import BERT_SPC
 
 logger = logging.getLogger()
@@ -89,7 +89,7 @@ class Instructor:
         path = None
         for epoch in range(self.opt.num_epoch):
             logger.info('epoch: {}'.format(epoch))
-            n_correct, n_total = 0, 0
+            n_correct, n_total, loss_total = 0, 0, 0
             # switch model to training mode
             self.model.train()
             for i_batch, sample_batched in enumerate(train_data_loader):
@@ -105,12 +105,13 @@ class Instructor:
                 loss.backward()
                 optimizer.step()
 
+                n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
+                n_total += len(outputs)
+                loss_total += loss.item() * len(outputs)
                 if global_step % self.opt.log_step == 0:
-                    n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
-                    n_total += len(outputs)
                     train_acc = n_correct / n_total
-
-                    logger.info('loss: {:.4f}, acc: {:.4f}'.format(loss.item(), train_acc))
+                    train_loss = loss_total / n_total
+                    logger.info('loss: {:.4f}, acc: {:.4f}'.format(train_loss, train_acc))
 
             val_acc, val_f1 = self._evaluate_acc_f1(val_data_loader)
             logger.info('> val_acc: {:.4f}, val_f1: {:.4f}'.format(val_acc, val_f1))
@@ -229,7 +230,6 @@ def main():
         'aoa': AOA,
         'mgan': MGAN,
         'bert_spc': BERT_SPC,
-        'aen': AEN,
         'aen_bert': AEN_BERT,
     }
     dataset_files = {
@@ -258,7 +258,6 @@ def main():
         'aoa': ['text_raw_indices', 'aspect_indices'],
         'mgan': ['text_raw_indices', 'aspect_indices', 'text_left_indices'],
         'bert_spc': ['text_bert_indices', 'bert_segments_ids'],
-        'aen': ['text_raw_indices', 'aspect_indices'],
         'aen_bert': ['text_raw_bert_indices', 'aspect_bert_indices'],
     }
     initializers = {

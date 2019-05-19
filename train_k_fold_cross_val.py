@@ -89,7 +89,7 @@ class Instructor:
         path = None
         for epoch in range(self.opt.num_epoch):
             logger.info('epoch: {}'.format(epoch))
-            n_correct, n_total = 0, 0
+            n_correct, n_total, loss_total = 0, 0, 0
             # switch model to training mode
             self.model.train()
             for i_batch, sample_batched in enumerate(train_data_loader):
@@ -105,12 +105,13 @@ class Instructor:
                 loss.backward()
                 optimizer.step()
 
+                n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
+                n_total += len(outputs)
+                loss_total += loss.item() * len(outputs)
                 if global_step % self.opt.log_step == 0:
-                    n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
-                    n_total += len(outputs)
                     train_acc = n_correct / n_total
-
-                    logger.info('loss: {:.4f}, acc: {:.4f}'.format(loss.item(), train_acc))
+                    train_loss = loss_total / n_total
+                    logger.info('loss: {:.4f}, acc: {:.4f}'.format(train_loss, train_acc))
 
             val_acc, val_f1 = self._evaluate_acc_f1(val_data_loader)
             logger.info('> val_acc: {:.4f}, val_f1: {:.4f}'.format(val_acc, val_f1))

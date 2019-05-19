@@ -47,17 +47,14 @@ class Instructor:
                 dat_fname='{0}_{1}_embedding_matrix.dat'.format(str(opt.embed_dim), opt.dataset))
             self.model = opt.model_class(embedding_matrix, opt).to(opt.device)
 
-        trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
-        testset = ABSADataset(opt.dataset_file['test'], tokenizer)
+        self.trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
+        self.testset = ABSADataset(opt.dataset_file['test'], tokenizer)
         assert 0 <= opt.valset_ratio < 1
         if opt.valset_ratio > 0:
-            valset_len = int(len(trainset) * opt.valset_ratio)
-            trainset, valset = random_split(trainset, (len(trainset)-valset_len, valset_len))
+            valset_len = int(len(self.trainset) * opt.valset_ratio)
+            self.trainset, self.valset = random_split(self.trainset, (len(self.trainset)-valset_len, valset_len))
         else:
-            valset = testset
-        self.train_data_loader = DataLoader(dataset=trainset, batch_size=opt.batch_size, shuffle=True)
-        self.test_data_loader = DataLoader(dataset=testset, batch_size=opt.batch_size, shuffle=False)
-        self.val_data_loader = DataLoader(dataset=valset, batch_size=opt.batch_size, shuffle=False)
+            self.valset = self.testset
 
         if opt.device.type == 'cuda':
             logger.info('cuda memory allocated: {}'.format(torch.cuda.memory_allocated(device=opt.device.index)))
@@ -87,7 +84,7 @@ class Instructor:
                             stdv = 1. / math.sqrt(p.shape[0])
                             torch.nn.init.uniform_(p, a=-stdv, b=stdv)
 
-    def _train(self, criterion, optimizer):
+    def _train(self, criterion, optimizer, train_data_loader, val_data_loader):
         max_val_acc = 0
         max_val_f1 = 0
         global_step = 0
@@ -95,10 +92,10 @@ class Instructor:
         for epoch in range(self.opt.num_epoch):
             logger.info('>' * 100)
             logger.info('epoch: {}'.format(epoch))
-            n_correct, n_total = 0, 0
+            n_correct, n_total, loss_total = 0, 0, 0
             # switch model to training mode
             self.model.train()
-            for i_batch, sample_batched in enumerate(self.train_data_loader):
+            for i_batch, sample_batched in enumerate(train_data_loader):
                 global_step += 1
                 # clear gradient accumulators
                 optimizer.zero_grad()
@@ -111,16 +108,15 @@ class Instructor:
                 loss.backward()
                 optimizer.step()
 
+                n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
+                n_total += len(outputs)
+                loss_total += loss.item() * len(outputs)
                 if global_step % self.opt.log_step == 0:
-                    n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
-                    n_total += len(outputs)
                     train_acc = n_correct / n_total
+                    train_loss = loss_total / n_total
+                    logger.info('loss: {:.4f}, acc: {:.4f}'.format(train_loss, train_acc))
 
-                    logger.info('loss: {:.4f}, acc: {:.4f}'.format(loss.item(), train_acc))
-
-            # switch model to evaluation mode
-            self.model.eval()
-            val_acc, val_f1 = self._evaluate_acc_f1(self.val_data_loader)
+            val_acc, val_f1 = self._evaluate_acc_f1(val_data_loader)
             logger.info('> val_acc: {:.4f}, val_f1: {:.4f}'.format(val_acc, val_f1))
             if val_acc > max_val_acc:
                 max_val_acc = val_acc
@@ -137,6 +133,8 @@ class Instructor:
     def _evaluate_acc_f1(self, data_loader):
         n_correct, n_total = 0, 0
         t_targets_all, t_outputs_all = None, None
+        # switch model to evaluation mode
+        self.model.eval()
         with torch.no_grad():
             for t_batch, t_sample_batched in enumerate(data_loader):
                 t_inputs = [t_sample_batched[col].to(self.opt.device) for col in self.opt.inputs_cols]
@@ -163,11 +161,15 @@ class Instructor:
         _params = filter(lambda p: p.requires_grad, self.model.parameters())
         optimizer = self.opt.optimizer(_params, lr=self.opt.learning_rate, weight_decay=self.opt.l2reg)
 
+        train_data_loader = DataLoader(dataset=self.trainset, batch_size=self.opt.batch_size, shuffle=True)
+        test_data_loader = DataLoader(dataset=self.testset, batch_size=self.opt.batch_size, shuffle=False)
+        val_data_loader = DataLoader(dataset=self.valset, batch_size=self.opt.batch_size, shuffle=False)
+
         self._reset_params()
-        best_model_path = self._train(criterion, optimizer)
+        best_model_path = self._train(criterion, optimizer, train_data_loader, val_data_loader)
         self.model.load_state_dict(torch.load(best_model_path))
         self.model.eval()
-        test_acc, test_f1 = self._evaluate_acc_f1(self.test_data_loader)
+        test_acc, test_f1 = self._evaluate_acc_f1(test_data_loader)
         logger.info('>> test_acc: {:.4f}, test_f1: {:.4f}'.format(test_acc, test_f1))
 
 

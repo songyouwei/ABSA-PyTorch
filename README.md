@@ -12,7 +12,6 @@
 
 * pytorch >= 0.4.0
 * numpy >= 1.13.3
-* tensorboardX >= 1.2
 * python 3.6 / 3.7
 * GloVe pre-trained word vectors (See [data_utils.py](./data_utils.py) for more detail)
   * Download pre-trained word vectors [here](https://github.com/stanfordnlp/GloVe#download-pre-trained-word-vectors),
@@ -25,16 +24,12 @@
 ### Training
 
 ```sh
-python train.py --model_name bert_spc --dataset restaurant --logdir bert_spc_logs
+python train.py --model_name bert_spc --dataset restaurant
 ```
 
-See [train.py](./train.py) for more detail.
+See [train.py](./train.py) for more training arguments.
 
-#### See the training process (needs to install TensorFlow)
-
-```sh
-tensorboard --logdir=./bert_spc_logs
-```
+Refer to [train_k_fold_cross_val.py](./train_k_fold_cross_val.py) for k-fold cross validation support.
 
 ### Inference
 
@@ -42,13 +37,13 @@ Please refer to [infer_example.py](./infer_example.py).
 
 ### Tips
 
+* For non-BERT-based models, training procedure is not very stable.
 * BERT-based models are more sensitive to hyperparameters (especially learning rate) on small data sets, see [this issue](https://github.com/songyouwei/ABSA-PyTorch/issues/27).
 * Fine-tuning on the specific task is necessary for releasing the true power of BERT.
-* Non-RNN models squeezed with [squeeze_embedding.py](./layers/squeeze_embedding.py) can be trained with larger batch size.
 
 ## BERT-based models
 
-### AEN / AEN-BERT ([aen.py](./models/aen.py))
+### AEN-BERT ([aen.py](./models/aen.py))
 Song, Youwei, et al. "Attentional Encoder Network for Targeted Sentiment Classification." arXiv preprint arXiv:1902.09314 (2019). [[pdf]](https://arxiv.org/pdf/1902.09314.pdf)
 
 ![aen](assets/aen.png)

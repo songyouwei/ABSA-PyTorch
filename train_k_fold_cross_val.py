@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
-# file: cross_val.py
-# author: gene_zc <gene_zhangchen@163.com>
-# Copyright (C) 2018. All Rights Reserved.
-from pytorch_pretrained_bert import BertModel
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from tensorboardX import SummaryWriter
-import itertools
+# file: train_k_fold_cross_val.py
+# author: songyouwei <youwei0314@gmail.com>
+# Copyright (C) 2019. All Rights Reserved.
+
+import logging
 import argparse
 import math
 import os
+import sys
+from time import strftime, localtime
 import random
-import numpy as np
+import numpy
+
+from pytorch_pretrained_bert import BertModel
+from sklearn import metrics
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, random_split, ConcatDataset
 
 from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, ABSADataset
 
@@ -20,17 +24,19 @@ from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, 
 from models.aen import CrossEntropyLoss_LSR, AEN, AEN_BERT
 from models.bert_spc import BERT_SPC
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
-class CrossVal:
+
+class Instructor:
     def __init__(self, opt):
         self.opt = opt
 
         if 'bert' in opt.model_name:
             tokenizer = Tokenizer4Bert(opt.max_seq_len, opt.pretrained_bert_name)
             bert = BertModel.from_pretrained(opt.pretrained_bert_name)
-            # freeze pretrained bert params
-            # for param in bert.parameters():
-            #     param.requires_grad = False
+            self.pretrained_bert_state_dict = bert.state_dict()
             self.model = opt.model_class(bert, opt).to(opt.device)
         else:
             tokenizer = build_tokenizer(
@@ -43,16 +49,11 @@ class CrossVal:
                 dat_fname='{0}_{1}_embedding_matrix.dat'.format(str(opt.embed_dim), opt.dataset))
             self.model = opt.model_class(embedding_matrix, opt).to(opt.device)
 
-        dataset = ABSADataset(opt.dataset_file['train'], tokenizer)
-        datalen = len(dataset)
-        dataset = [dataset[i*datalen//opt.fold:(i+1)*datalen//opt.fold] for i in range(opt.fold)]
-        
-        self.dataset = [(list(itertools.chain.from_iterable(dataset[:i]+dataset[i+1:])), dataset[i]) for i in range(opt.fold)]
-        if opt.shuffle:
-            random.shuffle(self.dataset)
+        self.trainset = ABSADataset(opt.dataset_file['train'], tokenizer)
+        self.testset = ABSADataset(opt.dataset_file['test'], tokenizer)
 
         if opt.device.type == 'cuda':
-            print("cuda memory allocated:", torch.cuda.memory_allocated(device=opt.device.index))
+            logger.info('cuda memory allocated: {}'.format(torch.cuda.memory_allocated(device=opt.device.index)))
         self._print_args()
 
     def _print_args(self):
@@ -63,14 +64,14 @@ class CrossVal:
                 n_trainable_params += n_params
             else:
                 n_nontrainable_params += n_params
-        print('n_trainable_params: {0}, n_nontrainable_params: {1}'.format(n_trainable_params, n_nontrainable_params))
-        print('> training arguments:')
+        logger.info('n_trainable_params: {0}, n_nontrainable_params: {1}'.format(n_trainable_params, n_nontrainable_params))
+        logger.info('> training arguments:')
         for arg in vars(self.opt):
-            print('>>> {0}: {1}'.format(arg, getattr(self.opt, arg)))
+            logger.info('>>> {0}: {1}'.format(arg, getattr(self.opt, arg)))
 
     def _reset_params(self):
         for child in self.model.children():
-            if type(child) != BertModel:  # skip bert params (with unfreezed bert)
+            if type(child) != BertModel:  # skip bert params
                 for p in child.parameters():
                     if p.requires_grad:
                         if len(p.shape) > 1:
@@ -78,22 +79,22 @@ class CrossVal:
                         else:
                             stdv = 1. / math.sqrt(p.shape[0])
                             torch.nn.init.uniform_(p, a=-stdv, b=stdv)
+            else:
+                self.model.bert.load_state_dict(self.pretrained_bert_state_dict)
 
-    def _train(self, criterion, optimizer, fold_idx):
-        writer = SummaryWriter(log_dir=self.opt.logdir)
-        val_loss_list = []
+    def _train(self, criterion, optimizer, train_data_loader, val_data_loader):
+        max_val_acc = 0
+        max_val_f1 = 0
         global_step = 0
-        train_data, val_data = self.dataset[fold_idx]
-        train_data_loader = DataLoader(dataset=train_data, batch_size=self.opt.batch_size, shuffle=True)
-        val_data_loader = DataLoader(dataset=val_data, batch_size=self.opt.batch_size, shuffle=False)
+        path = None
         for epoch in range(self.opt.num_epoch):
-            print('>' * 100)
-            print('epoch: ', epoch)
+            logger.info('epoch: {}'.format(epoch))
+            n_correct, n_total, loss_total = 0, 0, 0
+            # switch model to training mode
+            self.model.train()
             for i_batch, sample_batched in enumerate(train_data_loader):
                 global_step += 1
-
-                # switch model to training mode, clear gradient accumulators
-                self.model.train()
+                # clear gradient accumulators
                 optimizer.zero_grad()
 
                 inputs = [sample_batched[col].to(self.opt.device) for col in self.opt.inputs_cols]
@@ -104,33 +105,49 @@ class CrossVal:
                 loss.backward()
                 optimizer.step()
 
-            # switch model to evaluation mode
-            self.model.eval()
-            val_loss = self._evaluate_loss(criterion, val_data_loader)
-            val_loss_list.append(val_loss)
+                n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
+                n_total += len(outputs)
+                loss_total += loss.item() * len(outputs)
+                if global_step % self.opt.log_step == 0:
+                    train_acc = n_correct / n_total
+                    train_loss = loss_total / n_total
+                    logger.info('loss: {:.4f}, acc: {:.4f}'.format(train_loss, train_acc))
 
-            writer.add_scalar('train_loss', loss, global_step)
-            writer.add_scalar('val_loss', val_loss, global_step)
-            print('train_loss: {:.4f}, val_loss: {:.4f}'.format(loss.item(), val_loss))
+            val_acc, val_f1 = self._evaluate_acc_f1(val_data_loader)
+            logger.info('> val_acc: {:.4f}, val_f1: {:.4f}'.format(val_acc, val_f1))
+            if val_acc > max_val_acc:
+                max_val_acc = val_acc
+                if not os.path.exists('state_dict'):
+                    os.mkdir('state_dict')
+                path = 'state_dict/{0}_{1}_val_temp'.format(self.opt.model_name, self.opt.dataset)
+                torch.save(self.model.state_dict(), path)
+                logger.info('>> saved: {}'.format(path))
+            if val_f1 > max_val_f1:
+                max_val_f1 = val_f1
 
-        writer.close()
-        return np.mean(val_loss_list)
+        return path
 
-    def _evaluate_loss(self, criterion, data_loader):
-        v_loss_total = 0
-        n_val_total = 0
+    def _evaluate_acc_f1(self, data_loader):
+        n_correct, n_total = 0, 0
+        t_targets_all, t_outputs_all = None, None
+        # switch model to evaluation mode
+        self.model.eval()
         with torch.no_grad():
-            for v_batch, v_sample_batched in enumerate(data_loader):
-                v_inputs = [v_sample_batched[col].to(opt.device) for col in self.opt.inputs_cols]
-                v_targets = v_sample_batched['polarity'].to(opt.device)
-                v_outputs = self.model(v_inputs)
+            for t_batch, t_sample_batched in enumerate(data_loader):
+                t_inputs = [t_sample_batched[col].to(self.opt.device) for col in self.opt.inputs_cols]
+                t_targets = t_sample_batched['polarity'].to(self.opt.device)
+                t_outputs = self.model(t_inputs)
+
+                n_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()
+                n_total += len(t_outputs)
 
                 v_loss = criterion(v_outputs, v_targets)
                 v_loss_total += v_loss.item() * len(v_outputs)
                 n_val_total += len(v_outputs)
 
-        val_loss = v_loss_total / n_val_total
-        return val_loss
+        acc = n_correct / n_total
+        f1 = metrics.f1_score(t_targets_all.cpu(), torch.argmax(t_outputs_all, -1).cpu(), labels=[0, 1, 2], average='macro')
+        return acc, f1
 
     def run(self, repeats=5):
         # Loss and Optimizer
@@ -138,39 +155,46 @@ class CrossVal:
         _params = filter(lambda p: p.requires_grad, self.model.parameters())
         optimizer = self.opt.optimizer(_params, lr=self.opt.learning_rate, weight_decay=self.opt.l2reg)
 
-        best_val_loss = float('inf')
-        for r in range(repeats):
-            print('repeat: '+str(r+1))
-            fold_avg_val_losses = []
-            for i in range(self.opt.fold):
-                print('fold: '+str(i+1))
-                self._reset_params()
-                fold_avg_val_loss = self._train(criterion, optimizer, i)
-                fold_avg_val_losses.append(fold_avg_val_loss)
-                print('avg_val_loss: {0}'.format(fold_avg_val_loss))
-            val_loss = np.mean(fold_avg_val_losses)
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
-                if not os.path.exists('state_dict'):
-                    os.mkdir('state_dict')
-                path = 'state_dict/{0}_{1}_val_loss{2}'.format(self.opt.model_name, self.opt.dataset, round(val_loss, 4))
-                torch.save(self.model.state_dict(), path)
-                print('>> saved: ' + path)
+        test_data_loader = DataLoader(dataset=self.testset, batch_size=self.opt.batch_size, shuffle=False)
+        valset_len = len(self.trainset) // self.opt.cross_val_fold
+        splitedsets = random_split(self.trainset, tuple([valset_len] * (self.opt.cross_val_fold - 1) + [len(self.trainset) - valset_len * (self.opt.cross_val_fold - 1)]))
 
-if __name__ == '__main__':
+        all_test_acc, all_test_f1 = [], []
+        for fid in range(self.opt.cross_val_fold):
+            logger.info('fold : {}'.format(fid))
+            logger.info('>' * 100)
+            trainset = ConcatDataset([x for i, x in enumerate(splitedsets) if i != fid])
+            valset = splitedsets[fid]
+            train_data_loader = DataLoader(dataset=trainset, batch_size=self.opt.batch_size, shuffle=True)
+            val_data_loader = DataLoader(dataset=valset, batch_size=self.opt.batch_size, shuffle=False)
+
+            self._reset_params()
+            best_model_path = self._train(criterion, optimizer, train_data_loader, val_data_loader)
+
+            self.model.load_state_dict(torch.load(best_model_path))
+            test_acc, test_f1 = self._evaluate_acc_f1(test_data_loader)
+            all_test_acc.append(test_acc)
+            all_test_f1.append(test_f1)
+            logger.info('>> test_acc: {:.4f}, test_f1: {:.4f}'.format(test_acc, test_f1))
+
+        mean_test_acc, mean_test_f1 = numpy.mean(all_test_acc), numpy.mean(all_test_f1)
+        logger.info('>' * 100)
+        logger.info('>>> mean_test_acc: {:.4f}, mean_test_f1: {:.4f}'.format(mean_test_acc, mean_test_f1))
+
+
+def main():
     # Hyper Parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name', default='lstm', type=str)
+    parser.add_argument('--model_name', default='bert_spc', type=str)
     parser.add_argument('--dataset', default='twitter', type=str, help='twitter, restaurant, laptop')
     parser.add_argument('--optimizer', default='adam', type=str)
     parser.add_argument('--initializer', default='xavier_uniform_', type=str)
-    parser.add_argument('--learning_rate', default=2e-5, type=float)  # try 5e-5, 3e-5, 2e-5 for BERT models (sensitive)
+    parser.add_argument('--learning_rate', default=2e-5, type=float, help='try 5e-5, 2e-5 for BERT, 1e-3 for others')
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--l2reg', default=0.01, type=float)
-    parser.add_argument('--num_epoch', default=20, type=int)
-    parser.add_argument('--batch_size', default=64, type=int)  # try 16, 32, 64 for BERT models
-    parser.add_argument('--log_step', default=5, type=int)
-    parser.add_argument('--logdir', default='log', type=str)
+    parser.add_argument('--num_epoch', default=10, type=int, help='try larger number for non-BERT models')
+    parser.add_argument('--batch_size', default=64, type=int, help='try 16, 32, 64 for BERT models')
+    parser.add_argument('--log_step', default=10, type=int)
     parser.add_argument('--embed_dim', default=300, type=int)
     parser.add_argument('--hidden_dim', default=300, type=int)
     parser.add_argument('--bert_dim', default=768, type=int)
@@ -178,10 +202,18 @@ if __name__ == '__main__':
     parser.add_argument('--max_seq_len', default=80, type=int)
     parser.add_argument('--polarities_dim', default=3, type=int)
     parser.add_argument('--hops', default=3, type=int)
-    parser.add_argument('--fold', default=10, type=int)
-    parser.add_argument('--shuffle', default=True, type=bool)
-    parser.add_argument('--device', default=None, type=str)
+    parser.add_argument('--device', default=None, type=str, help='e.g. cuda:0')
+    parser.add_argument('--seed', default=None, type=int, help='set seed for reproducibility')
+    parser.add_argument('--cross_val_fold', default=10, type=int, help='k-fold cross validation')
     opt = parser.parse_args()
+
+    if opt.seed is not None:
+        random.seed(opt.seed)
+        numpy.random.seed(opt.seed)
+        torch.manual_seed(opt.seed)
+        torch.cuda.manual_seed(opt.seed)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
 
     model_classes = {
         'lstm': LSTM,
@@ -225,7 +257,7 @@ if __name__ == '__main__':
         'mgan': ['text_raw_indices', 'aspect_indices', 'text_left_indices'],
         'bert_spc': ['text_bert_indices', 'bert_segments_ids'],
         'aen': ['text_raw_indices', 'aspect_indices'],
-        'aen_bert' : ['text_raw_bert_indices', 'aspect_bert_indices'],
+        'aen_bert': ['text_raw_bert_indices', 'aspect_bert_indices'],
     }
     initializers = {
         'xavier_uniform_': torch.nn.init.xavier_uniform_,
@@ -249,5 +281,12 @@ if __name__ == '__main__':
     opt.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') \
         if opt.device is None else torch.device(opt.device)
 
-    cv = CrossVal(opt)
-    cv.run()
+    log_file = '{}-{}-{}.log'.format(opt.model_name, opt.dataset, strftime("%y%m%d-%H%M", localtime()))
+    logger.addHandler(logging.FileHandler(log_file))
+
+    ins = Instructor(opt)
+    ins.run()
+
+
+if __name__ == '__main__':
+    main()

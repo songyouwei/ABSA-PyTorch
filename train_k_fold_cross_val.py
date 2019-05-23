@@ -141,15 +141,18 @@ class Instructor:
                 n_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()
                 n_total += len(t_outputs)
 
-                v_loss = criterion(v_outputs, v_targets)
-                v_loss_total += v_loss.item() * len(v_outputs)
-                n_val_total += len(v_outputs)
+                if t_targets_all is None:
+                    t_targets_all = t_targets
+                    t_outputs_all = t_outputs
+                else:
+                    t_targets_all = torch.cat((t_targets_all, t_targets), dim=0)
+                    t_outputs_all = torch.cat((t_outputs_all, t_outputs), dim=0)
 
         acc = n_correct / n_total
         f1 = metrics.f1_score(t_targets_all.cpu(), torch.argmax(t_outputs_all, -1).cpu(), labels=[0, 1, 2], average='macro')
         return acc, f1
 
-    def run(self, repeats=5):
+    def run(self):
         # Loss and Optimizer
         criterion = nn.CrossEntropyLoss()
         _params = filter(lambda p: p.requires_grad, self.model.parameters())

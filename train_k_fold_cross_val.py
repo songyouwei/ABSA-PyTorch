@@ -87,9 +87,11 @@ class Instructor:
         max_val_f1 = 0
         global_step = 0
         path = None
+        continue_not_increase = 0
         for epoch in range(self.opt.num_epoch):
             logger.info('epoch: {}'.format(epoch))
             n_correct, n_total, loss_total = 0, 0, 0
+            increase_flag = False
             # switch model to training mode
             self.model.train()
             for i_batch, sample_batched in enumerate(train_data_loader):
@@ -116,14 +118,22 @@ class Instructor:
             val_acc, val_f1 = self._evaluate_acc_f1(val_data_loader)
             logger.info('> val_acc: {:.4f}, val_f1: {:.4f}'.format(val_acc, val_f1))
             if val_acc > max_val_acc:
+                increase_flag = True
                 max_val_acc = val_acc
                 if not os.path.exists('state_dict'):
                     os.mkdir('state_dict')
                 path = 'state_dict/{0}_{1}_val_temp'.format(self.opt.model_name, self.opt.dataset)
                 torch.save(self.model.state_dict(), path)
-                logger.info('>> saved: {}'.format(path))
+                logger.info('>> Best model saved: {}'.format(path))
             if val_f1 > max_val_f1:
                 max_val_f1 = val_f1
+            if increase_flag == False:
+                continue_not_increase += 1
+                if continue_not_increase >= 5:
+                    logger.info('>> Early stop.')
+                    break
+            else:
+                continue_not_increase = 0
 
         return path
 

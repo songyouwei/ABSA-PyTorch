@@ -40,7 +40,7 @@ class CrossEntropyLoss_LSR(nn.Module):
 
 class AEN_GloVe(nn.Module):
     def __init__(self, embedding_matrix, opt):
-        super(AEN, self).__init__()
+        super(AEN_GloVe, self).__init__()
         self.opt = opt
         self.embed = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix, dtype=torch.float))
         self.squeeze_embedding = SqueezeEmbedding()

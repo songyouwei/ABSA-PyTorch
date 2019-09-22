@@ -198,7 +198,7 @@ def main():
     parser.add_argument('--valset_ratio', default=0, type=float, help='set ratio between 0 and 1 for validation support')
     # The following parameters are only valid for the lcf-bert model
     parser.add_argument('--local_context_focus', default='cdm', type=str, help='local context focus mode, cdw or cdm')
-    # semantic-relative-distance, see paper of LCF-BERT model
+    # semantic-relative-distance, see the paper of LCF-BERT model
     parser.add_argument('--SRD', default=3, type=int, help='set SRD')
     opt = parser.parse_args()
 

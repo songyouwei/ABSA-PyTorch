@@ -43,6 +43,11 @@ Please refer to [infer_example.py](./infer_example.py).
 
 ## BERT-based models
 
+### LCF-BERT ([lcf_bert.py](./models/lcf_bert.py))
+Zeng Biqing, Yang Heng, et al. "LCF: A Local Context Focus Mechanism for Aspect-Based Sentiment Classification." Applied Sciences. 2019, 9, 3389.. [[pdf]](https://www.mdpi.com/2076-3417/9/16/3389/pdf)
+
+![lcf](assets/lcf.png)
+
 ### AEN-BERT ([aen.py](./models/aen.py))
 Song, Youwei, et al. "Attentional Encoder Network for Targeted Sentiment Classification." arXiv preprint arXiv:1902.09314 (2019). [[pdf]](https://arxiv.org/pdf/1902.09314.pdf)
 

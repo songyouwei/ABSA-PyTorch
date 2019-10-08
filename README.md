@@ -33,7 +33,8 @@ Refer to [train_k_fold_cross_val.py](./train_k_fold_cross_val.py) for k-fold cro
 
 ### Inference
 
-Please refer to [infer_example.py](./infer_example.py).
+Please refer to [infer_example.py](./infer_example.py) for non-BERT models.
+Please refer to [infer_example_bert_models.py](./infer_example_bert_models.py) for BERT models.
 
 ### Tips
 

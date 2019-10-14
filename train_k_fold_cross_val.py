@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, random_split, ConcatDataset
 
 from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, ABSADataset
 
-from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN
+from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN, LCF_BERT
 from models.aen import CrossEntropyLoss_LSR, AEN_BERT
 from models.bert_spc import BERT_SPC
 
@@ -196,18 +196,22 @@ def main():
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--l2reg', default=0.01, type=float)
     parser.add_argument('--num_epoch', default=10, type=int, help='try larger number for non-BERT models')
-    parser.add_argument('--batch_size', default=64, type=int, help='try 16, 32, 64 for BERT models')
+    parser.add_argument('--batch_size', default=16, type=int, help='try 16, 32, 64 for BERT models')
     parser.add_argument('--log_step', default=10, type=int)
     parser.add_argument('--embed_dim', default=300, type=int)
     parser.add_argument('--hidden_dim', default=300, type=int)
     parser.add_argument('--bert_dim', default=768, type=int)
-    parser.add_argument('--pretrained_bert_name', default='bert-base-uncased', type=str)
+    parser.add_argument('--pretrained_bert_name', default=r'E:\Works\LCA-Net\bert_pretrained_restaurant', type=str)
     parser.add_argument('--max_seq_len', default=80, type=int)
     parser.add_argument('--polarities_dim', default=3, type=int)
     parser.add_argument('--hops', default=3, type=int)
     parser.add_argument('--device', default=None, type=str, help='e.g. cuda:0')
     parser.add_argument('--seed', default=None, type=int, help='set seed for reproducibility')
     parser.add_argument('--cross_val_fold', default=10, type=int, help='k-fold cross validation')
+    # The following parameters are only valid for the lcf-bert model
+    parser.add_argument('--local_context_focus', default='cdm', type=str, help='local context focus mode, cdw or cdm')
+    # semantic-relative-distance, see the paper of LCF-BERT model
+    parser.add_argument('--SRD', default=3, type=int, help='set SRD')
     opt = parser.parse_args()
 
     if opt.seed is not None:
@@ -231,6 +235,12 @@ def main():
         'mgan': MGAN,
         'bert_spc': BERT_SPC,
         'aen_bert': AEN_BERT,
+        'lcf_bert': LCF_BERT,
+        # default hyper-parameters for LCF-BERT model is as follws:
+        # lr: 2e-5
+        # l2: 1e-5
+        # batch size: 16
+        # num epochs: 5
     }
     dataset_files = {
         'twitter': {

@@ -2,6 +2,7 @@
 # file: lcf_bert.py
 # author: yangheng <yangheng@m.scnu.edu.cn>
 # Copyright (C) 2019. All Rights Reserved.
+# The code of lcf-bert based on repository: https://github.com/yangheng95/LCF-ABSA
 
 import torch
 import torch.nn as nn
@@ -31,11 +32,12 @@ class LCF_BERT(nn.Module):
 
         self.bert_spc = bert
         self.opt = opt
-        self.bert_local = copy.deepcopy(bert)
+        # self.bert_local = copy.deepcopy(bert)  # Uncomment the line to use dual Bert
+        self.bert_local = bert   # Default to use single Bert and reduce memory requirements
         self.dropout = nn.Dropout(opt.dropout)
         self.bert_SA = SelfAttention(bert.config, opt)
-        self.mean_pooling_double = nn.Linear(opt.bert_dim * 2, opt.bert_dim)
-        self.mean_pooling_single = nn.Linear(opt.bert_dim, opt.bert_dim)
+        self.linear_double = nn.Linear(opt.bert_dim * 2, opt.bert_dim)
+        self.linear_single = nn.Linear(opt.bert_dim, opt.bert_dim)
         self.bert_pooler = BertPooler(bert.config)
         self.dense = nn.Linear(opt.bert_dim, opt.polarities_dim)
 
@@ -46,9 +48,9 @@ class LCF_BERT(nn.Module):
         masked_text_raw_indices = np.ones((text_local_indices.size(0), self.opt.max_seq_len, self.opt.bert_dim),
                                           dtype=np.float32)
         for text_i, asp_i in zip(range(len(texts)), range(len(asps))):
-            asp_len = np.count_nonzero(asps[asp_i])
+            asp_len = np.count_nonzero(asps[asp_i]) - 2
             try:
-                asp_begin = np.argwhere(texts[text_i] == asps[asp_i][0])[0][0]
+                asp_begin = np.argwhere(texts[text_i] == asps[asp_i][1])[0][0]
             except:
                 continue
             if asp_begin >= mask_len:
@@ -107,7 +109,7 @@ class LCF_BERT(nn.Module):
             bert_local_out = torch.mul(bert_local_out, weighted_text_local_features)
 
         out_cat = torch.cat((bert_local_out, bert_spc_out), dim=-1)
-        mean_pool = self.mean_pooling_double(out_cat)
+        mean_pool = self.linear_double(out_cat)
         self_attention_out = self.bert_SA(mean_pool)
         pooled_out = self.bert_pooler(self_attention_out)
         dense_out = self.dense(pooled_out)

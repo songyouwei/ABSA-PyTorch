@@ -176,8 +176,8 @@ class Instructor:
 def main():
     # Hyper Parameters
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model_name', default='lcf_bert', type=str)
-    parser.add_argument('--dataset', default='laptop', type=str, help='twitter, restaurant, laptop')
+    parser.add_argument('--model_name', default='bert_spc', type=str)
+    parser.add_argument('--dataset', default='twitter', type=str, help='twitter, restaurant, laptop')
     parser.add_argument('--optimizer', default='adam', type=str)
     parser.add_argument('--initializer', default='xavier_uniform_', type=str)
     parser.add_argument('--learning_rate', default=2e-5, type=float, help='try 5e-5, 2e-5 for BERT, 1e-3 for others')
@@ -193,7 +193,7 @@ def main():
     parser.add_argument('--max_seq_len', default=80, type=int)
     parser.add_argument('--polarities_dim', default=3, type=int)
     parser.add_argument('--hops', default=3, type=int)
-    parser.add_argument('--device', default='cuda', type=str, help='e.g. cuda:0')
+    parser.add_argument('--device', default=None, type=str, help='e.g. cuda:0')
     parser.add_argument('--seed', default=None, type=int, help='set seed for reproducibility')
     parser.add_argument('--valset_ratio', default=0, type=float, help='set ratio between 0 and 1 for validation support')
     # The following parameters are only valid for the lcf-bert model

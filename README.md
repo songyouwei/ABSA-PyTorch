@@ -45,7 +45,7 @@ Please refer to [infer_example_bert_models.py](./infer_example_bert_models.py) f
 ## BERT-based models
 
 ### LCF-BERT ([lcf_bert.py](./models/lcf_bert.py))
-Zeng Biqing, Yang Heng, et al. "LCF: A Local Context Focus Mechanism for Aspect-Based Sentiment Classification." Applied Sciences. 2019, 9, 3389.. [[pdf]](https://www.mdpi.com/2076-3417/9/16/3389/pdf)
+Zeng Biqing, Yang Heng, et al. "LCF: A Local Context Focus Mechanism for Aspect-Based Sentiment Classification." Applied Sciences. 2019, 9, 3389. [[pdf]](https://www.mdpi.com/2076-3417/9/16/3389/pdf)
 
 ![lcf](assets/lcf.png)
 

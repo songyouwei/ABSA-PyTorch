@@ -3,14 +3,14 @@
 # author: yangheng <yangheng@m.scnu.edu.cn>
 # Copyright (C) 2019. All Rights Reserved.
 
-# The code is based on repository: https://github.com/yangheng95/LCF-ABSA
+# The up-to-date repository of lcf-bert can be found at: https://github.com/yangheng95/LCF-ABSA
 
 import torch
 import torch.nn as nn
 import copy
 import numpy as np
 
-from pytorch_pretrained_bert.modeling import BertPooler, BertSelfAttention
+from pytorch_transformers.modeling_bert import BertPooler, BertSelfAttention
 
 
 class SelfAttention(nn.Module):
@@ -25,7 +25,7 @@ class SelfAttention(nn.Module):
         zero_tensor = torch.tensor(np.zeros((inputs.size(0), 1, 1, self.opt.max_seq_len),
                                             dtype=np.float32), dtype=torch.float32).to(self.opt.device)
         SA_out = self.SA(inputs, zero_tensor)
-        return self.tanh(SA_out)
+        return self.tanh(SA_out[0])
 
 class LCF_BERT(nn.Module):
     def __init__(self, bert, opt):
@@ -95,10 +95,10 @@ class LCF_BERT(nn.Module):
         text_local_indices = inputs[2]
         aspect_indices = inputs[3]
 
-        bert_spc_out, _ = self.bert_spc(text_bert_indices, bert_segments_ids, output_all_encoded_layers=False)
+        bert_spc_out, _ = self.bert_spc(text_bert_indices, bert_segments_ids)
         bert_spc_out = self.dropout(bert_spc_out)
 
-        bert_local_out, _ = self.bert_local(text_local_indices, output_all_encoded_layers=False)
+        bert_local_out, _ = self.bert_local(text_local_indices)
         bert_local_out = self.dropout(bert_local_out)
 
         if self.opt.local_context_focus == 'cdm':

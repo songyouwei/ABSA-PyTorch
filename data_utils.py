@@ -8,7 +8,7 @@ import pickle
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from pytorch_pretrained_bert import BertTokenizer
+from pytorch_transformers import BertTokenizer
 
 
 def build_tokenizer(fnames, max_seq_len, dat_fname):

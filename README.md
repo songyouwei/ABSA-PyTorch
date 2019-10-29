@@ -16,8 +16,8 @@
 * GloVe pre-trained word vectors (See [data_utils.py](./data_utils.py) for more detail)
   * Download pre-trained word vectors [here](https://github.com/stanfordnlp/GloVe#download-pre-trained-word-vectors),
   * extract the [glove.twitter.27B.zip](http://nlp.stanford.edu/data/wordvecs/glove.twitter.27B.zip) and [glove.42B.300d.zip](http://nlp.stanford.edu/data/wordvecs/glove.42B.300d.zip) to the root directory
-* pytorch-pretrained-bert 0.6.1
-  * See [pytorch-pretrained-BERT](https://github.com/huggingface/pytorch-pretrained-BERT) for more detail.
+* pytorch-transformers
+  * See [pytorch-transformers](https://github.com/huggingface/pytorch-transformers) for more detail.
 
 ## Usage
 

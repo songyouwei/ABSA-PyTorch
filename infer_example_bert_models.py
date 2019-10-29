@@ -3,19 +3,13 @@
 # author: songyouwei <youwei0314@gmail.com>
 # Copyright (C) 2018. All Rights Reserved.
 
-import os
-import pickle
 import numpy as np
 import torch
-from torch.utils.data import Dataset
-from pytorch_pretrained_bert import BertTokenizer
 import torch.nn.functional as F
-from models.bert_spc import BERT_SPC
-from models import LCF_BERT
+from models.lcf_bert import LCF_BERT
 from models.aen import CrossEntropyLoss_LSR, AEN_BERT
 from models.bert_spc import BERT_SPC
 from pytorch_pretrained_bert import BertModel
-from torch.utils.data import DataLoader, random_split
 from data_utils import Tokenizer4Bert
 
 
@@ -42,10 +36,13 @@ def prepare_data(text_left, aspect, text_right, tokenizer):
     aspect_indices = tokenizer.text_to_sequence(aspect)
     aspect_len = np.sum(aspect_indices != 0)
     text_bert_indices = tokenizer.text_to_sequence('[CLS] ' + text_left + " " + aspect + " " + text_right + ' [SEP] ' + aspect + " [SEP]")
+    text_raw_bert_indices = tokenizer.text_to_sequence(
+        "[CLS] " + text_left + " " + aspect + " " + text_right + " [SEP]")
     bert_segments_ids = np.asarray([0] * (np.sum(text_raw_indices != 0) + 2) + [1] * (aspect_len + 1))
     bert_segments_ids = pad_and_truncate(bert_segments_ids, tokenizer.max_seq_len)
-    
-    return text_bert_indices, bert_segments_ids
+    aspect_bert_indices = tokenizer.text_to_sequence("[CLS] " + aspect + " [SEP]")
+
+    return text_bert_indices, bert_segments_ids, text_raw_bert_indices, aspect_bert_indices
 
     
 if __name__ == '__main__':
@@ -90,13 +87,20 @@ if __name__ == '__main__':
     # aspect = interior decor
     # text_right = and affordable city prices.
     
-    text_bert_indices, bert_segments_ids = prepare_data('This little place has a cute','interior decor','and affordable city prices.', tokenizer)
+    text_bert_indices, bert_segments_ids, text_raw_bert_indices, aspect_bert_indices = \
+        prepare_data('This little place has a cute', 'interior decor', 'and affordable city prices.', tokenizer)
     
     
     text_bert_indices = torch.tensor([text_bert_indices], dtype=torch.int64).to(opt.device)
     bert_segments_ids = torch.tensor([bert_segments_ids], dtype=torch.int64).to(opt.device)
-
-    inputs = [text_bert_indices, bert_segments_ids]
+    text_raw_bert_indices = torch.tensor([text_raw_bert_indices], dtype=torch.int64).to(opt.device)
+    aspect_bert_indices = torch.tensor([aspect_bert_indices], dtype=torch.int64).to(opt.device)
+    if 'lcf' in opt.state_dict_path:
+        inputs = [text_bert_indices, bert_segments_ids, text_raw_bert_indices, aspect_bert_indices]
+    elif 'aen' in opt.state_dict_path:
+        inputs = [text_raw_bert_indices, aspect_bert_indices]
+    elif 'spc' in opt.state_dict_path:
+        inputs = [text_bert_indices, bert_segments_ids]
     outputs = model(inputs)
     t_probs = F.softmax(outputs, dim=-1).cpu().numpy()
     print('t_probs = ',t_probs)

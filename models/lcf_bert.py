@@ -3,7 +3,9 @@
 # author: yangheng <yangheng@m.scnu.edu.cn>
 # Copyright (C) 2019. All Rights Reserved.
 
-# The up-to-date repository of lcf-bert can be found at: https://github.com/yangheng95/LCF-ABSA
+
+# The code is based on repository: https://github.com/yangheng95/LCF-ABSA
+
 
 import torch
 import torch.nn as nn

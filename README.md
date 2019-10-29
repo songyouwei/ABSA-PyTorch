@@ -17,7 +17,7 @@
   * Download pre-trained word vectors [here](https://github.com/stanfordnlp/GloVe#download-pre-trained-word-vectors),
   * extract the [glove.twitter.27B.zip](http://nlp.stanford.edu/data/wordvecs/glove.twitter.27B.zip) and [glove.42B.300d.zip](http://nlp.stanford.edu/data/wordvecs/glove.42B.300d.zip) to the root directory
 * pytorch-transformers
-  * See [pytorch-pretrained-BERT](https://github.com/huggingface/pytorch-transformers) for more detail.
+  * See [pytorch-transformers](https://github.com/huggingface/pytorch-transformers) for more detail.
 
 ## Usage
 

@@ -11,7 +11,7 @@ from time import strftime, localtime
 import random
 import numpy
 
-from pytorch_transformers import BertModel
+from transformers import BertModel
 
 from sklearn import metrics
 import torch

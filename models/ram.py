@@ -30,9 +30,10 @@ class RAM(nn.Module):
             for idx in range(memory_len[i], seq_len):
                 weight[i].append(1)
                 u[i].append(0)
-        u = torch.tensor(u).to(self.opt.device).unsqueeze(2)
+        u = torch.tensor(u, dtype=memory.dtype).to(self.opt.device).unsqueeze(2)
         weight = torch.tensor(weight).to(self.opt.device).unsqueeze(2)
-        memory = torch.cat([memory*weight, u], dim=2)       
+        v = memory*weight
+        memory = torch.cat([v, u], dim=2)
         return memory
 
     def __init__(self, embedding_matrix, opt):

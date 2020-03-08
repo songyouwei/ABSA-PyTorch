@@ -1,15 +1,14 @@
 # ABSA-PyTorch
-<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
-<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 > Aspect Based Sentiment Analysis, PyTorch Implementations.
 >
 > 基于方面的情感分析，使用PyTorch实现。
 
 ![LICENSE](https://img.shields.io/packagist/l/doctrine/orm.svg)
-![Contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)
 [![Gitter](https://badges.gitter.im/ABSA-PyTorch/community.svg)](https://gitter.im/ABSA-PyTorch/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ## Requirement
 
@@ -56,17 +55,17 @@ Please refer to [infer_example_bert_models.py](./infer_example_bert_models.py) f
 ### LCF-BERT ([lcf_bert.py](./models/lcf_bert.py))
 Zeng Biqing, Yang Heng, et al. "LCF: A Local Context Focus Mechanism for Aspect-Based Sentiment Classification." Applied Sciences. 2019, 9, 3389. [[pdf]](https://www.mdpi.com/2076-3417/9/16/3389/pdf)
 
-![lcf](assets/lcf.png)
+<img src="./assets/lcf.png" width="500px;"/>
 
 ### AEN-BERT ([aen.py](./models/aen.py))
 Song, Youwei, et al. "Attentional Encoder Network for Targeted Sentiment Classification." arXiv preprint arXiv:1902.09314 (2019). [[pdf]](https://arxiv.org/pdf/1902.09314.pdf)
 
-![aen](assets/aen.png)
+<img src="./assets/aen.png" width="500px;"/>
 
 ### BERT for Sentence Pair Classification ([bert_spc.py](./models/bert_spc.py))
 Devlin, Jacob, et al. "Bert: Pre-training of deep bidirectional transformers for language understanding." arXiv preprint arXiv:1810.04805 (2018). [[pdf]](https://arxiv.org/pdf/1810.04805.pdf)
 
-![bert_spc](assets/bert_spc.png)
+<img src="./assets/bert_spc.png" width="500px;"/>
 
 
 ## Non-BERT-based models
@@ -74,57 +73,57 @@ Devlin, Jacob, et al. "Bert: Pre-training of deep bidirectional transformers for
 ### MGAN ([mgan.py](./models/mgan.py))
 Fan, Feifan, et al. "Multi-grained Attention Network for Aspect-Level Sentiment Classification." Proceedings of the 2018 Conference on Empirical Methods in Natural Language Processing. 2018. [[pdf]](http://aclweb.org/anthology/D18-1380)
 
-![mgan](assets/mgan.png)
+<img src="./assets/mgan.png" width="500px;"/>
 
 ### AOA ([aoa.py](./models/aoa.py))
 Huang, Binxuan, et al. "Aspect Level Sentiment Classification with Attention-over-Attention Neural Networks." arXiv preprint arXiv:1804.06536 (2018). [[pdf]](https://arxiv.org/pdf/1804.06536.pdf)
 
-![aoa](assets/aoa.png)
+<img src="./assets/aoa.png" width="500px;"/>
 
 ### TNet ([tnet_lf.py](./models/tnet_lf.py))
 Li, Xin, et al. "Transformation Networks for Target-Oriented Sentiment Classification." arXiv preprint arXiv:1805.01086 (2018). [[pdf]](https://arxiv.org/pdf/1805.01086)
 
-![tnet_lf](assets/tnet_lf.png)
+<img src="./assets/tnet_lf.png" width="500px;"/>
 
 ### Cabasc ([cabasc.py](./models/cabasc.py))
 Liu, Qiao, et al. "Content Attention Model for Aspect Based Sentiment Analysis." Proceedings of the 2018 World Wide Web Conference on World Wide Web. International World Wide Web Conferences Steering Committee, 2018.
 
-![cabasc](assets/cabasc.png)
+<img src="./assets/cabasc.png" width="500px;"/>
 
 
 ### RAM ([ram.py](./models/ram.py))
 Chen, Peng, et al. "Recurrent Attention Network on Memory for Aspect Sentiment Analysis." Proceedings of the 2017 Conference on Empirical Methods in Natural Language Processing. 2017. [[pdf]](http://www.aclweb.org/anthology/D17-1047)
 
-![ram](assets/ram.png)
+<img src="./assets/ram.png" width="500px;"/>
 
 
 ### MemNet ([memnet.py](./models/memnet.py))
 Tang, Duyu, B. Qin, and T. Liu. "Aspect Level Sentiment Classification with Deep Memory Network." Conference on Empirical Methods in Natural Language Processing 2016:214-224. [[pdf]](https://arxiv.org/pdf/1605.08900)
 
-![memnet](assets/memnet.png)
+<img src="./assets/memnet.png" width="500px;"/>
 
 
 ### IAN ([ian.py](./models/ian.py))
 Ma, Dehong, et al. "Interactive Attention Networks for Aspect-Level Sentiment Classification." arXiv preprint arXiv:1709.00893 (2017). [[pdf]](https://arxiv.org/pdf/1709.00893)
 
-![han](assets/han.png)
+<img src="./assets/ian.png" width="500px;"/>
 
 ### ATAE-LSTM ([atae_lstm.py](./models/atae_lstm.py))
 Wang, Yequan, Minlie Huang, and Li Zhao. "Attention-based lstm for aspect-level sentiment classification." Proceedings of the 2016 conference on empirical methods in natural language processing. 2016.
 
-![han](assets/atae-lstm.png)
+<img src="./assets/atae-lstm.png" width="500px;"/>
 
 
 ### TD-LSTM ([td_lstm.py](./models/td_lstm.py))
 
 Tang, Duyu, et al. "Effective LSTMs for Target-Dependent Sentiment Classification." Proceedings of COLING 2016, the 26th International Conference on Computational Linguistics: Technical Papers. 2016. [[pdf]](https://arxiv.org/pdf/1512.01100)
 
-![td-lstm](assets/td-lstm.png)
+<img src="./assets/td-lstm.png" width="500px;"/>
 
 
 ### LSTM ([lstm.py](./models/lstm.py))
 
-![lstm](assets/lstm.png)
+<img src="./assets/lstm.png" width="500px;"/>
 
 
 ## Reviews / Surveys
@@ -133,15 +132,6 @@ Zhang, Lei, Shuai Wang, and Bing Liu. "Deep Learning for Sentiment Analysis: A S
 
 Young, Tom, et al. "Recent trends in deep learning based natural language processing." arXiv preprint arXiv:1708.02709 (2017). [[pdf]](https://arxiv.org/pdf/1708.02709)
 
-## Contributions
-
-Feel free to contribute!
-
-You can raise an issue or submit a pull request, whichever is more convenient for you.
-
-## Licence
-
-MIT License
 
 ## Contributors ✨
 
@@ -166,3 +156,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
 <!-- ALL-CONTRIBUTORS-LIST:END -->
 
 This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
+
+## Licence
+
+MIT

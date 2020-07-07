@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# file: lstmc.py
+# file: cnn.py
 # author: anthng <thienan99dt@gmail.com>
 # Copyright (C) 2020. All Rights Reserved.
 

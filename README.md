@@ -10,6 +10,9 @@
 [![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
+My implementation is based on [songyouwei's repository](https://github.com/songyouwei/ABSA-PyTorch).
+
+
 ## Requirement
 
 * pytorch >= 0.4.0
@@ -126,6 +129,9 @@ Tang, Duyu, et al. "Effective LSTMs for Target-Dependent Sentiment Classificatio
 
 Hochreiter, Sepp, and Jürgen Schmidhuber. "Long short-term memory." Neural computation 9.8 (1997): 1735-1780. [[pdf](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.4320&rep=rep1&type=pdf)]
 
+### CNN ([cnn.py](./models/cnn.py))
+
+Yoon Kim. "Convolutional neural networks for sentence classification." arXiv preprint arXiv:1408.5882 (2014). [[pdf]](https://arxiv.org/pdf/1408.5882.pdf)
 
 ## Contributors
 

@@ -16,8 +16,7 @@
 * numpy >= 1.13.3
 * sklearn
 * python 3.6 / 3.7
-* pytorch-transformers == 1.2.0
-  * See [pytorch-transformers](https://github.com/huggingface/pytorch-transformers) for more detail.
+* transformers
 
 To install requirements, run `pip install -r requirements.txt`.
 

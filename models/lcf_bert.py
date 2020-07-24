@@ -12,7 +12,7 @@ import torch.nn as nn
 import copy
 import numpy as np
 
-from pytorch_transformers.modeling_bert import BertPooler, BertSelfAttention
+from transformers.modeling_bert import BertPooler, BertSelfAttention
 
 
 class SelfAttention(nn.Module):
@@ -97,7 +97,7 @@ class LCF_BERT(nn.Module):
         text_local_indices = inputs[2]
         aspect_indices = inputs[3]
 
-        bert_spc_out, _ = self.bert_spc(text_bert_indices, bert_segments_ids)
+        bert_spc_out, _ = self.bert_spc(text_bert_indices, token_type_ids=bert_segments_ids)
         bert_spc_out = self.dropout(bert_spc_out)
 
         bert_local_out, _ = self.bert_local(text_local_indices)

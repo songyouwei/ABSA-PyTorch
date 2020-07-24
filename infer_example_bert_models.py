@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from models.lcf_bert import LCF_BERT
 from models.aen import AEN_BERT
 from models.bert_spc import BERT_SPC
-from pytorch_transformers import BertModel
+from transformers import BertModel
 from data_utils import Tokenizer4Bert
 import argparse
 

@@ -167,6 +167,8 @@ class ABSADataset(Dataset):
                 'aspect_indices': aspect_indices,
                 'aspect_in_text': aspect_in_text,
                 'polarity': polarity,
+                'left_context_len': left_context_len,
+                'aspect_len': aspect_len,
             }
 
             all_data.append(data)

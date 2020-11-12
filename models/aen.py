@@ -11,7 +11,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 # CrossEntropyLoss for Label Smoothing Regularization
 class CrossEntropyLoss_LSR(nn.Module):
     def __init__(self, device, para_LSR=0.2):
@@ -37,7 +36,8 @@ class CrossEntropyLoss_LSR(nn.Module):
         else:
             return torch.sum(loss)
 
-
+'''
+We hereby focus on the bert version.
 class AEN_GloVe(nn.Module):
     def __init__(self, embedding_matrix, opt):
         super(AEN_GloVe, self).__init__()
@@ -80,6 +80,7 @@ class AEN_GloVe(nn.Module):
         x = torch.cat((hc_mean, s1_mean, ht_mean), dim=-1)
         out = self.dense(x)
         return out
+'''
 
 
 class AEN_BERT(nn.Module):
@@ -117,12 +118,9 @@ class AEN_BERT(nn.Module):
 
         s1, _ = self.attn_s1(hc, ht)
 
-        context_len = torch.tensor(context_len, dtype=torch.float).to(self.opt.device)
-        target_len = torch.tensor(target_len, dtype=torch.float).to(self.opt.device)
-
-        hc_mean = torch.div(torch.sum(hc, dim=1), context_len.view(context_len.size(0), 1))
-        ht_mean = torch.div(torch.sum(ht, dim=1), target_len.view(target_len.size(0), 1))
-        s1_mean = torch.div(torch.sum(s1, dim=1), context_len.view(context_len.size(0), 1))
+        hc_mean = torch.div(torch.sum(hc, dim=1), context_len.unsqueeze(1).float())
+        ht_mean = torch.div(torch.sum(ht, dim=1), target_len.unsqueeze(1).float())
+        s1_mean = torch.div(torch.sum(s1, dim=1), context_len.unsqueeze(1).float())
 
         x = torch.cat((hc_mean, s1_mean, ht_mean), dim=-1)
         out = self.dense(x)

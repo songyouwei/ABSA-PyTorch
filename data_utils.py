@@ -127,6 +127,9 @@ class ABSADataset(Dataset):
         fin = open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
         lines = fin.readlines()
         fin.close()
+        fin = open(fname+'.graph', 'rb')
+        idx2graph = pickle.load(fin)
+        fin.close()
 
         all_data = []
         for i in range(0, len(lines), 3):
@@ -134,38 +137,42 @@ class ABSADataset(Dataset):
             aspect = lines[i + 1].lower().strip()
             polarity = lines[i + 2].strip()
 
-            text_raw_indices = tokenizer.text_to_sequence(text_left + " " + aspect + " " + text_right)
-            text_raw_without_aspect_indices = tokenizer.text_to_sequence(text_left + " " + text_right)
-            text_left_indices = tokenizer.text_to_sequence(text_left)
-            text_left_with_aspect_indices = tokenizer.text_to_sequence(text_left + " " + aspect)
-            text_right_indices = tokenizer.text_to_sequence(text_right, reverse=True)
-            text_right_with_aspect_indices = tokenizer.text_to_sequence(" " + aspect + " " + text_right, reverse=True)
+            text_indices = tokenizer.text_to_sequence(text_left + " " + aspect + " " + text_right)
+            context_indices = tokenizer.text_to_sequence(text_left + " " + text_right)
+            left_indices = tokenizer.text_to_sequence(text_left)
+            left_with_aspect_indices = tokenizer.text_to_sequence(text_left + " " + aspect)
+            right_indices = tokenizer.text_to_sequence(text_right, reverse=True)
+            right_with_aspect_indices = tokenizer.text_to_sequence(aspect + " " + text_right, reverse=True)
             aspect_indices = tokenizer.text_to_sequence(aspect)
-            left_context_len = np.sum(text_left_indices != 0)
+            left_len = np.sum(left_indices != 0)
             aspect_len = np.sum(aspect_indices != 0)
-            aspect_in_text = torch.tensor([left_context_len.item(), (left_context_len + aspect_len - 1).item()])
+            aspect_boundary = np.asarray([left_len, left_len + aspect_len - 1], dtype=np.int64)
             polarity = int(polarity) + 1
 
-            text_bert_indices = tokenizer.text_to_sequence('[CLS] ' + text_left + " " + aspect + " " + text_right + ' [SEP] ' + aspect + " [SEP]")
-            bert_segments_ids = np.asarray([0] * (np.sum(text_raw_indices != 0) + 2) + [1] * (aspect_len + 1))
-            bert_segments_ids = pad_and_truncate(bert_segments_ids, tokenizer.max_seq_len)
+            text_len = np.sum(text_indices != 0)
+            concat_bert_indices = tokenizer.text_to_sequence('[CLS] ' + text_left + " " + aspect + " " + text_right + ' [SEP] ' + aspect + " [SEP]")
+            concat_segments_indices = [0] * (text_len + 2) + [1] * (aspect_len + 1)
+            concat_segments_indices = pad_and_truncate(concat_segments_indices, tokenizer.max_seq_len)
 
-            text_raw_bert_indices = tokenizer.text_to_sequence("[CLS] " + text_left + " " + aspect + " " + text_right + " [SEP]")
+            text_bert_indices = tokenizer.text_to_sequence("[CLS] " + text_left + " " + aspect + " " + text_right + " [SEP]")
             aspect_bert_indices = tokenizer.text_to_sequence("[CLS] " + aspect + " [SEP]")
 
+            dependency_graph = idx2graph[i]
+
             data = {
+                'concat_bert_indices': concat_bert_indices,
+                'concat_segments_indices': concat_segments_indices,
                 'text_bert_indices': text_bert_indices,
-                'bert_segments_ids': bert_segments_ids,
-                'text_raw_bert_indices': text_raw_bert_indices,
                 'aspect_bert_indices': aspect_bert_indices,
-                'text_raw_indices': text_raw_indices,
-                'text_raw_without_aspect_indices': text_raw_without_aspect_indices,
-                'text_left_indices': text_left_indices,
-                'text_left_with_aspect_indices': text_left_with_aspect_indices,
-                'text_right_indices': text_right_indices,
-                'text_right_with_aspect_indices': text_right_with_aspect_indices,
+                'text_indices': text_indices,
+                'context_indices': context_indices,
+                'left_indices': left_indices,
+                'left_with_aspect_indices': left_with_aspect_indices,
+                'right_indices': right_indices,
+                'right_with_aspect_indices': right_with_aspect_indices,
                 'aspect_indices': aspect_indices,
-                'aspect_in_text': aspect_in_text,
+                'aspect_boundary': aspect_boundary,
+                'dependency_graph': dependency_graph,
                 'polarity': polarity,
             }
 

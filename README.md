@@ -37,8 +37,7 @@ python train.py --model_name bert_spc --dataset restaurant
 
 ### Inference
 
-* Refer to [infer_example.py](./infer_example.py) for non-BERT-based models.
-* Refer to [infer_example_bert_models.py](./infer_example_bert_models.py) for BERT-based models.
+* Refer to [infer_example.py](./infer_example.py) for both non-BERT-based models and BERT-based models.
 
 ### Tips
 
@@ -84,6 +83,10 @@ Devlin, Jacob, et al. "Bert: Pre-training of deep bidirectional transformers for
 
 
 ## Non-BERT-based models
+
+### ASGCN ([asgcn.py](./models/asgcn.py)) ([official](https://github.com/GeneZC/ASGCN))
+
+Zhang, Chen, et al. "Aspect-based Sentiment Classification with Aspect-specific Graph Convolutional Networks." Proceedings of the 2019 Conference on Empirical Methods in Natural Language Processing. 2019. [[pdf]](https://www.aclweb.org/anthology/D19-1464)
 
 ### MGAN ([mgan.py](./models/mgan.py))
 

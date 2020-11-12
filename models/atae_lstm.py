@@ -21,16 +21,16 @@ class ATAE_LSTM(nn.Module):
         self.dense = nn.Linear(opt.hidden_dim, opt.polarities_dim)
 
     def forward(self, inputs):
-        text_raw_indices, aspect_indices = inputs[0], inputs[1]
-        x_len = torch.sum(text_raw_indices != 0, dim=-1)
+        text_indices, aspect_indices = inputs[0], inputs[1]
+        x_len = torch.sum(text_indices != 0, dim=-1)
         x_len_max = torch.max(x_len)
-        aspect_len = torch.tensor(torch.sum(aspect_indices != 0, dim=-1), dtype=torch.float).to(self.opt.device)
+        aspect_len = torch.sum(aspect_indices != 0, dim=-1).float()
 
-        x = self.embed(text_raw_indices)
+        x = self.embed(text_indices)
         x = self.squeeze_embedding(x, x_len)
         aspect = self.embed(aspect_indices)
-        aspect_pool = torch.div(torch.sum(aspect, dim=1), aspect_len.view(aspect_len.size(0), 1))
-        aspect = torch.unsqueeze(aspect_pool, dim=1).expand(-1, x_len_max, -1)
+        aspect_pool = torch.div(torch.sum(aspect, dim=1), aspect_len.unsqueeze(1))
+        aspect = aspect_pool.unsqueeze(1).expand(-1, x_len_max, -1)
         x = torch.cat((aspect, x), dim=-1)
 
         h, (_, _) = self.lstm(x, x_len)

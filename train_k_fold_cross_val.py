@@ -12,7 +12,7 @@ from time import strftime, localtime
 import random
 import numpy
 
-from pytorch_pretrained_bert import BertModel
+from transformers import BertModel
 from sklearn import metrics
 import torch
 import torch.nn as nn
@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader, random_split, ConcatDataset
 
 from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, ABSADataset
 
-from models import LSTM, IAN, MemNet, RAM, TD_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN
+from models import LSTM, IAN, MemNet, RAM, TD_LSTM, TC_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN, LCF_BERT
 from models.aen import CrossEntropyLoss_LSR, AEN_BERT
 from models.bert_spc import BERT_SPC
 
@@ -218,6 +218,10 @@ def main():
     parser.add_argument('--device', default=None, type=str, help='e.g. cuda:0')
     parser.add_argument('--seed', default=None, type=int, help='set seed for reproducibility')
     parser.add_argument('--cross_val_fold', default=10, type=int, help='k-fold cross validation')
+    # The following parameters are only valid for the lcf-bert model
+    parser.add_argument('--local_context_focus', default='cdm', type=str, help='local context focus mode, cdw or cdm')
+    # semantic-relative-distance, see the paper of LCF-BERT model
+    parser.add_argument('--SRD', default=3, type=int, help='set SRD')
     opt = parser.parse_args()
 
     if opt.seed is not None:
@@ -231,6 +235,7 @@ def main():
     model_classes = {
         'lstm': LSTM,
         'td_lstm': TD_LSTM,
+        'tc_lstm': TC_LSTM,
         'atae_lstm': ATAE_LSTM,
         'ian': IAN,
         'memnet': MemNet,
@@ -241,6 +246,12 @@ def main():
         'mgan': MGAN,
         'bert_spc': BERT_SPC,
         'aen_bert': AEN_BERT,
+        'lcf_bert': LCF_BERT,
+        # default hyper-parameters for LCF-BERT model is as follws:
+        # lr: 2e-5
+        # l2: 1e-5
+        # batch size: 16
+        # num epochs: 5
     }
     dataset_files = {
         'twitter': {
@@ -259,6 +270,7 @@ def main():
     input_colses = {
         'lstm': ['text_raw_indices'],
         'td_lstm': ['text_left_with_aspect_indices', 'text_right_with_aspect_indices'],
+        'tc_lstm': ['text_left_with_aspect_indices', 'text_right_with_aspect_indices', 'aspect_indices'],
         'atae_lstm': ['text_raw_indices', 'aspect_indices'],
         'ian': ['text_raw_indices', 'aspect_indices'],
         'memnet': ['text_raw_without_aspect_indices', 'aspect_indices'],

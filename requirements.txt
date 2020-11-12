@@ -1,0 +1,4 @@
+numpy>=1.13.3
+torch>=0.4.0
+transformers
+sklearn

@@ -1,0 +1,78 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "AlbertoPaz",
+      "name": "Alberto Paz",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/36967362?v=4",
+      "profile": "https://github.com/AlbertoPaz",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "jiangtaojy",
+      "name": "jiangtao ",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/37891032?v=4",
+      "profile": "http://taojiang0923@gmail.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "GeneZC",
+      "name": "WhereIsMyHead",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/24239326?v=4",
+      "profile": "https://genezc.github.io",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "songyouwei",
+      "name": "songyouwei",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/2573291?v=4",
+      "profile": "https://github.com/songyouwei",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "yangheng95",
+      "name": "YangHeng",
+      "avatar_url": "https://avatars2.githubusercontent.com/u/51735130?v=4",
+      "profile": "https://github.com/yangheng95",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "rmarcacini",
+      "name": "rmarcacini",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/40037976?v=4",
+      "profile": "https://github.com/rmarcacini",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ZhangYikaii",
+      "name": "Yikai Zhang",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/46623714?v=4",
+      "profile": "https://github.com/ZhangYikaii",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "ABSA-PyTorch",
+  "projectOwner": "songyouwei",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}

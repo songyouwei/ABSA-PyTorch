@@ -157,7 +157,7 @@ class ABSADataset(Dataset):
             text_bert_indices = tokenizer.text_to_sequence("[CLS] " + text_left + " " + aspect + " " + text_right + " [SEP]")
             aspect_bert_indices = tokenizer.text_to_sequence("[CLS] " + aspect + " [SEP]")
 
-            dependency_graph = numpy.pad(idx2graph[i], \
+            dependency_graph = np.pad(idx2graph[i], \
                 ((0,tokenizer.max_seq_len-len(text_indices)),(0,tokenizer.max_seq_len-len(text_indices))), 'constant')
 
             data = {

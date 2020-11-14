@@ -158,7 +158,7 @@ class ABSADataset(Dataset):
             aspect_bert_indices = tokenizer.text_to_sequence("[CLS] " + aspect + " [SEP]")
 
             dependency_graph = np.pad(idx2graph[i], \
-                ((0,tokenizer.max_seq_len-len(text_indices)),(0,tokenizer.max_seq_len-len(text_indices))), 'constant')
+                ((0,tokenizer.max_seq_len-idx2graph[i].shape[0]),(0,tokenizer.max_seq_len-idx2graph[i].shape[0])), 'constant')
 
             data = {
                 'concat_bert_indices': concat_bert_indices,

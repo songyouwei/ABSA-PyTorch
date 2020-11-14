@@ -262,7 +262,7 @@ def main():
         'memnet': ['context_indices', 'aspect_indices'],
         'ram': ['text_indices', 'aspect_indices', 'left_indices'],
         'cabasc': ['text_indices', 'aspect_indices', 'left_with_aspect_indices', 'right_with_aspect_indices'],
-        'tnet_lf': ['text_indices', 'aspect_indices', 'aspect_in_text'],
+        'tnet_lf': ['text_indices', 'aspect_indices', 'aspect_boundary'],
         'aoa': ['text_indices', 'aspect_indices'],
         'mgan': ['text_indices', 'aspect_indices', 'left_indices'],
         'asgcn': ['text_indices', 'aspect_indices', 'left_indices', 'dependency_graph'],

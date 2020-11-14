@@ -7,8 +7,9 @@
 import torch
 import torch.nn.functional as F
 import argparse
+import numpy as np
 
-from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert
+from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, pad_and_truncate
 from models import LSTM, IAN, MemNet, RAM, TD_LSTM, TC_LSTM, Cabasc, ATAE_LSTM, TNet_LF, AOA, MGAN, ASGCN, LCF_BERT
 from models.aen import CrossEntropyLoss_LSR, AEN_BERT
 from models.bert_spc import BERT_SPC
@@ -45,24 +46,24 @@ class Inferer:
         aspect = aspect.lower().strip()
         text_left, _, text_right = [s.strip() for s in text.lower().partition(aspect)]
         
-        text_indices = tokenizer.text_to_sequence(text_left + " " + aspect + " " + text_right)
-        context_indices = tokenizer.text_to_sequence(text_left + " " + text_right)
-        left_indices = tokenizer.text_to_sequence(text_left)
-        left_with_aspect_indices = tokenizer.text_to_sequence(text_left + " " + aspect)
-        right_indices = tokenizer.text_to_sequence(text_right, reverse=True)
-        right_with_aspect_indices = tokenizer.text_to_sequence(aspect + " " + text_right, reverse=True)
-        aspect_indices = tokenizer.text_to_sequence(aspect)
+        text_indices = self.tokenizer.text_to_sequence(text_left + " " + aspect + " " + text_right)
+        context_indices = self.tokenizer.text_to_sequence(text_left + " " + text_right)
+        left_indices = self.tokenizer.text_to_sequence(text_left)
+        left_with_aspect_indices = self.tokenizer.text_to_sequence(text_left + " " + aspect)
+        right_indices = self.tokenizer.text_to_sequence(text_right, reverse=True)
+        right_with_aspect_indices = self.tokenizer.text_to_sequence(aspect + " " + text_right, reverse=True)
+        aspect_indices = self.tokenizer.text_to_sequence(aspect)
         left_len = np.sum(left_indices != 0)
         aspect_len = np.sum(aspect_indices != 0)
         aspect_boundary = np.asarray([left_len, left_len + aspect_len - 1], dtype=np.int64)
 
         text_len = np.sum(text_indices != 0)
-        concat_bert_indices = tokenizer.text_to_sequence('[CLS] ' + text_left + " " + aspect + " " + text_right + ' [SEP] ' + aspect + " [SEP]")
+        concat_bert_indices = self.tokenizer.text_to_sequence('[CLS] ' + text_left + " " + aspect + " " + text_right + ' [SEP] ' + aspect + " [SEP]")
         concat_segments_indices = [0] * (text_len + 2) + [1] * (aspect_len + 1)
-        concat_segments_indices = pad_and_truncate(concat_segments_indices, tokenizer.max_seq_len)
+        concat_segments_indices = pad_and_truncate(concat_segments_indices, self.tokenizer.max_seq_len)
 
-        text_bert_indices = tokenizer.text_to_sequence("[CLS] " + text_left + " " + aspect + " " + text_right + " [SEP]")
-        aspect_bert_indices = tokenizer.text_to_sequence("[CLS] " + aspect + " [SEP]")
+        text_bert_indices = self.tokenizer.text_to_sequence("[CLS] " + text_left + " " + aspect + " " + text_right + " [SEP]")
+        aspect_bert_indices = self.tokenizer.text_to_sequence("[CLS] " + aspect + " [SEP]")
 
         dependency_graph = dependency_adj_matrix(text)
 
@@ -90,7 +91,7 @@ class Inferer:
 
 
 if __name__ == '__main__':
-   model_classes = {
+    model_classes = {
         'lstm': LSTM,
         'td_lstm': TD_LSTM,
         'tc_lstm': TC_LSTM,
@@ -100,7 +101,7 @@ if __name__ == '__main__':
         'ram': RAM,
         'cabasc': Cabasc,
         'tnet_lf': TNet_LF,
-        'aoa': AOA,
+       'aoa': AOA,
         'mgan': MGAN,
         'asgcn': ASGCN,
         'bert_spc': BERT_SPC,

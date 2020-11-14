@@ -4,3 +4,10 @@
 - adding support for all models available in an inference exemplar script, merging the inference script specifically designed for bert-based models.
 - refining implementations of available models.
 - adding a graph-based model ASGCN.
+
+- ASGCN tested
+- train tested
+- train cross-val tested
+- infer example tested
+
+- bert-based models are not tested

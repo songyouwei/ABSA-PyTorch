@@ -19,9 +19,9 @@ class AOA(nn.Module):
         self.dense = nn.Linear(2 * opt.hidden_dim, opt.polarities_dim)
 
     def forward(self, inputs):
-        text_raw_indices = inputs[0] # batch_size x seq_len
+        text_indices = inputs[0] # batch_size x seq_len
         aspect_indices = inputs[1] # batch_size x seq_len
-        ctx_len = torch.sum(text_raw_indices != 0, dim=1)
+        ctx_len = torch.sum(text_indices != 0, dim=1)
         asp_len = torch.sum(aspect_indices != 0, dim=1)
         ctx = self.embed(text_raw_indices) # batch_size x seq_len x embed_dim
         asp = self.embed(aspect_indices) # batch_size x seq_len x embed_dim

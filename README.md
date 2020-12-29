@@ -7,7 +7,7 @@
 ![LICENSE](https://img.shields.io/packagist/l/doctrine/orm.svg)
 [![Gitter](https://badges.gitter.im/ABSA-PyTorch/community.svg)](https://gitter.im/ABSA-PyTorch/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ## Requirement
@@ -145,6 +145,9 @@ Thanks goes to these wonderful people:
     <td align="center"><a href="https://github.com/yangheng95"><img src="https://avatars2.githubusercontent.com/u/51735130?v=4" width="100px;" alt=""/><br /><sub><b>YangHeng</b></sub></a><br /><a href="https://github.com/songyouwei/ABSA-PyTorch/commits?author=yangheng95" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/rmarcacini"><img src="https://avatars0.githubusercontent.com/u/40037976?v=4" width="100px;" alt=""/><br /><sub><b>rmarcacini</b></sub></a><br /><a href="https://github.com/songyouwei/ABSA-PyTorch/commits?author=rmarcacini" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/ZhangYikaii"><img src="https://avatars1.githubusercontent.com/u/46623714?v=4" width="100px;" alt=""/><br /><sub><b>Yikai Zhang</b></sub></a><br /><a href="https://github.com/songyouwei/ABSA-PyTorch/commits?author=ZhangYikaii" title="Code">💻</a></td>
+  </tr>
+  <tr>
+    <td align="center"><a href="https://github.com/anayden"><img src="https://avatars0.githubusercontent.com/u/17383?v=4" width="100px;" alt=""/><br /><sub><b>Alexey Naiden</b></sub></a><br /><a href="https://github.com/songyouwei/ABSA-PyTorch/commits?author=anayden" title="Code">💻</a></td>
   </tr>
 </table>
 

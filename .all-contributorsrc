@@ -67,6 +67,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "anayden",
+      "name": "Alexey Naiden",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/17383?v=4",
+      "profile": "https://github.com/anayden",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,

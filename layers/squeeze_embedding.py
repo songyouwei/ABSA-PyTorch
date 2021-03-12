@@ -29,7 +29,7 @@ class SqueezeEmbedding(nn.Module):
         x_len = x_len[x_sort_idx]
         x = x[x_sort_idx]
         """pack"""
-        x_emb_p = torch.nn.utils.rnn.pack_padded_sequence(x, x_len, batch_first=self.batch_first)
+        x_emb_p = torch.nn.utils.rnn.pack_padded_sequence(x, x_len.cpu(), batch_first=self.batch_first)
         """unpack: out"""
         out = torch.nn.utils.rnn.pad_packed_sequence(x_emb_p, batch_first=self.batch_first)  # (sequence, lengths)
         out = out[0]  #

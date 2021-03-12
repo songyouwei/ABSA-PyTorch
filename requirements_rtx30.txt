@@ -1,0 +1,5 @@
+numpy==1.20.1
+torch==1.7.1+cu110
+--find-links https://download.pytorch.org/whl/torch_stable.html
+transformers==3.5.1
+sklearn

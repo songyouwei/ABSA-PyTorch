@@ -128,6 +128,9 @@ Tang, Duyu, et al. "Effective LSTMs for Target-Dependent Sentiment Classificatio
 
 Hochreiter, Sepp, and Jürgen Schmidhuber. "Long short-term memory." Neural computation 9.8 (1997): 1735-1780. [[pdf](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.676.4320&rep=rep1&type=pdf)]
 
+## Note on running with RTX30*
+If you are running on RTX30 series there may be some compatibility issues between installed/required versions of torch, cuda.
+In that case try using `requirements_rtx30.txt` instead of `requirements.txt`.
 
 ## Contributors
 

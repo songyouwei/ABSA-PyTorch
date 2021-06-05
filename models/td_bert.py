@@ -52,3 +52,6 @@ class TD_BERT(nn.Module):
         logits = self.dense(pooled_output)
 
         return logits
+    
+    # def get_adversarial_outputs(self, input, p_adv):
+

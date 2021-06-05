@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# file: train.py
-# author: songyouwei <youwei0314@gmail.com>
-# Copyright (C) 2018. All Rights Reserved.
 import logging
 import argparse
 import math
@@ -9,7 +5,7 @@ import os
 import sys
 from time import strftime, localtime
 import random
-import numpy
+import numpy as np
 
 from transformers import BertModel
 
@@ -17,6 +13,7 @@ from sklearn import metrics
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, random_split
+# from transformers.file_utils import requires_backends
 
 from data_utils import build_tokenizer, build_embedding_matrix, Tokenizer4Bert, ABSADataset
 
@@ -25,6 +22,8 @@ from models import LSTM, IAN, MemNet, RAM, TD_LSTM, TC_LSTM, Cabasc, ATAE_LSTM, 
 from models.aen import CrossEntropyLoss_LSR, AEN_BERT
 from models.bert_spc import BERT_SPC
 from models.td_bert import TD_BERT
+
+from torch.autograd import Variable, grad
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -104,10 +103,18 @@ class Instructor:
                 optimizer.zero_grad()
 
                 inputs = [sample_batched[col].to(self.opt.device) for col in self.opt.inputs_cols]
-                outputs = self.model(inputs)
                 targets = sample_batched['polarity'].to(self.opt.device)
 
-                loss = criterion(outputs, targets)
+                if self.opt.adv > 0:
+                    outputs, eb = self.model.adv_forward(inputs)
+                    loss = criterion(outputs, targets)
+                    loss_adv = self._loss_adv(loss, eb, criterion, inputs, targets, p_mult= self.opt.adv)
+                    loss += loss_adv
+                else:
+                    outputs,eb  = self.model.adv_forward(inputs)
+                    loss = criterion(outputs, targets)
+                    loss_adv=0
+
                 loss.backward()
                 optimizer.step()
 
@@ -142,7 +149,8 @@ class Instructor:
             for t_batch, t_sample_batched in enumerate(data_loader):
                 t_inputs = [t_sample_batched[col].to(self.opt.device) for col in self.opt.inputs_cols]
                 t_targets = t_sample_batched['polarity'].to(self.opt.device)
-                t_outputs = self.model(t_inputs)
+                # t_outputs, _  = self.model.adv_forward(t_inputs)
+                t_outputs  = self.model.forward(t_inputs)
 
                 n_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()
                 n_total += len(t_outputs)
@@ -157,8 +165,34 @@ class Instructor:
         acc = n_correct / n_total
         f1 = metrics.f1_score(t_targets_all.cpu(), torch.argmax(t_outputs_all, -1).cpu(), labels=[0, 1, 2], average='macro')
         return acc, f1
-    
-    # def _evaluate
+
+    def _l2_normalize(self,d):
+        if isinstance(d, Variable):
+            d = d.data.cpu().numpy()
+        elif isinstance(d, torch.FloatTensor) or isinstance(d, torch.cuda.FloatTensor):
+            d = d.cpu().numpy()
+        d /= (np.sqrt(np.sum(d ** 2, axis=(1, 2))).reshape((-1, 1, 1)) + 1e-16)
+        return torch.from_numpy(d) 
+
+    def _loss_adv(self, loss, emb, criterion, inputs, targets, p_mult):
+        # emb_grad = grad(loss, emb, retain_graph=True,)
+        emb_grad = grad(loss, emb, retain_graph=True)
+        # emb_grad = grad(loss, emb, retain_graph=True)
+
+        # print(emb_grad.shape)
+        p_adv = torch.FloatTensor(p_mult * self._l2_normalize(emb_grad[0].data))
+        # p_adv = p_adv.cuda(non_blocking=False, re)
+        p_adv = Variable(p_adv, requires_grad = True).cuda()
+        # print('p_adv',p_adv)
+        # aug=inputs[6].cpu()
+        # if aug[0] ==1:
+        #     adv_loss=0
+        # else:
+        logits, eb = self.model.adv_forward(inputs, p_adv)
+        # out_aux,logits,reg_can,reg_aux,bert_word_eb,reg_chg_loss = self.model(inputs,p_adv)
+        adv_loss = criterion(logits, targets)
+        # loss += adv_loss
+        return adv_loss
 
     def run(self):
         # Loss and Optimizer
@@ -204,6 +238,7 @@ def main():
     # The following parameters are only valid for the lcf-bert model
     parser.add_argument('--local_context_focus', default='cdm', type=str, help='local context focus mode, cdw or cdm')
     parser.add_argument('--SRD', default=3, type=int, help='semantic-relative-distance, see the paper of LCF-BERT model')
+    parser.add_argument('--adv', default=1, type=float, help='adv pertube')
     opt = parser.parse_args()
 
     if opt.seed is not None:

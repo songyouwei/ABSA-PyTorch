@@ -1,3 +1,7 @@
+third_party
+state_dict
+
+
 __pycache__/
 *.dat
 *.h5

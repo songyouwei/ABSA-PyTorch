@@ -30,6 +30,8 @@ logger.setLevel(logging.INFO)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
+
+
 class Instructor:
     def __init__(self, opt):
         self.opt = opt
@@ -111,9 +113,10 @@ class Instructor:
                     loss_adv = self._loss_adv(loss, eb, criterion, inputs, targets, p_mult= self.opt.adv)
                     loss += loss_adv
                 else:
-                    outputs,eb  = self.model.adv_forward(inputs)
+                    outputs = self.model.forward(inputs)
+                    # outputs, eb = self.model.adv_forward(inputs)
                     loss = criterion(outputs, targets)
-                    loss_adv=0
+                    loss_adv = 0
 
                 loss.backward()
                 optimizer.step()
@@ -149,19 +152,15 @@ class Instructor:
             for t_batch, t_sample_batched in enumerate(data_loader):
                 t_inputs = [t_sample_batched[col].to(self.opt.device) for col in self.opt.inputs_cols]
                 t_targets = t_sample_batched['polarity'].to(self.opt.device)
-                # t_outputs, _  = self.model.adv_forward(t_inputs)
                 t_outputs  = self.model.forward(t_inputs)
-
                 n_correct += (torch.argmax(t_outputs, -1) == t_targets).sum().item()
                 n_total += len(t_outputs)
-
                 if t_targets_all is None:
                     t_targets_all = t_targets
                     t_outputs_all = t_outputs
                 else:
                     t_targets_all = torch.cat((t_targets_all, t_targets), dim=0)
                     t_outputs_all = torch.cat((t_outputs_all, t_outputs), dim=0)
-
         acc = n_correct / n_total
         f1 = metrics.f1_score(t_targets_all.cpu(), torch.argmax(t_outputs_all, -1).cpu(), labels=[0, 1, 2], average='macro')
         return acc, f1
@@ -175,24 +174,38 @@ class Instructor:
         return torch.from_numpy(d) 
 
     def _loss_adv(self, loss, emb, criterion, inputs, targets, p_mult):
-        # emb_grad = grad(loss, emb, retain_graph=True,)
         emb_grad = grad(loss, emb, retain_graph=True)
-        # emb_grad = grad(loss, emb, retain_graph=True)
-
-        # print(emb_grad.shape)
         p_adv = torch.FloatTensor(p_mult * self._l2_normalize(emb_grad[0].data))
-        # p_adv = p_adv.cuda(non_blocking=False, re)
-        p_adv = Variable(p_adv, requires_grad = True).cuda()
-        # print('p_adv',p_adv)
-        # aug=inputs[6].cpu()
-        # if aug[0] ==1:
-        #     adv_loss=0
-        # else:
-        logits, eb = self.model.adv_forward(inputs, p_adv)
-        # out_aux,logits,reg_can,reg_aux,bert_word_eb,reg_chg_loss = self.model(inputs,p_adv)
-        adv_loss = criterion(logits, targets)
-        # loss += adv_loss
+        p_adv = p_adv.cuda(non_blocking=False)
+        p_adv = Variable(p_adv)
+        outputs, bert_word_output = self.model.adv_forward(inputs, p_adv)
+        adv_loss = criterion(outputs, targets)
         return adv_loss
+        # loss.backward(retain_graph = True)
+        # emb_grad = emb.grad
+        # print(emb_grad.shape)
+        # p_adv = torch.FloatTensor(p_mult * self._l2_normalize(emb_grad[0].data))
+        
+
+
+        # # emb_grad = grad(loss, emb, retain_graph=True,)
+        # emb_grad = grad(loss, emb, retain_graph=True)
+        # # emb_grad = grad(loss, emb, retain_graph=True)
+
+        # # print(emb_grad.shape)
+        # p_adv = torch.FloatTensor(p_mult * self._l2_normalize(emb_grad[0].data))
+        # # p_adv = p_adv.cuda(non_blocking=False, re)
+        # p_adv = Variable(p_adv, requires_grad = True).cuda()
+        # # print('p_adv',p_adv)
+        # # aug=inputs[6].cpu()
+        # # if aug[0] ==1:
+        # #     adv_loss=0
+        # # else:
+        # logits, eb = self.model.adv_forward(inputs, p_adv)
+        # # out_aux,logits,reg_can,reg_aux,bert_word_eb,reg_chg_loss = self.model(inputs,p_adv)
+        # adv_loss = criterion(logits, targets)
+        # # loss += adv_loss
+        # return adv_loss
 
     def run(self):
         # Loss and Optimizer
@@ -334,6 +347,7 @@ def main():
 
     log_file = '{}-{}-{}.log'.format(opt.model_name, opt.dataset, strftime("%y%m%d-%H%M", localtime()))
     logger.addHandler(logging.FileHandler(log_file))
+    logger.info(opt.adv)
 
     ins = Instructor(opt)
     ins.run()

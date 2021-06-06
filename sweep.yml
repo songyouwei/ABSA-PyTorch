@@ -1,0 +1,7 @@
+CMD: 'python train.py'
+LOGROOT: /home/logs
+
+HPARAMS:
+  model_name: ['td_bert', 'bert_spc']
+  dataset: ['twitter', 'restaurant', 'restaurant_random_rest_test', 'restaurant_random_laptop_test', 'restaurant_random_rest_train_gold_test', 'restaurant_random_laptop_train_gold_test', 'laptop', 'laptop_random_laptop_test', 'laptop_random_rest_test', 'laptop_random_rest_train_gold_test', 'laptop_random_laptop_train_gold_test']
+  adv: [0, 0.1 ,0.5]

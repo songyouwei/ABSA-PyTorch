@@ -8,7 +8,7 @@ import random
 import numpy as np
 
 from transformers import BertModel
-
+import transformers
 from sklearn import metrics
 import torch
 import torch.nn as nn
@@ -88,7 +88,7 @@ class Instructor:
                             stdv = 1. / math.sqrt(p.shape[0])
                             torch.nn.init.uniform_(p, a=-stdv, b=stdv)
 
-    def _train(self, criterion, optimizer, train_data_loader, val_data_loader):
+    def _train(self, criterion, scheduler, optimizer, train_data_loader, val_data_loader):
         max_val_acc = 0
         max_val_f1 = 0
         global_step = 0
@@ -102,7 +102,7 @@ class Instructor:
             for i_batch, sample_batched in enumerate(train_data_loader):
                 global_step += 1
                 # clear gradient accumulators
-                optimizer.zero_grad()
+                self.model.zero_grad()
 
                 inputs = [sample_batched[col].to(self.opt.device) for col in self.opt.inputs_cols]
                 targets = sample_batched['polarity'].to(self.opt.device)
@@ -120,6 +120,7 @@ class Instructor:
 
                 loss.backward()
                 optimizer.step()
+                scheduler.step()
 
                 n_correct += (torch.argmax(outputs, -1) == targets).sum().item()
                 n_total += len(outputs)
@@ -140,7 +141,6 @@ class Instructor:
                 logger.info('>> saved: {}'.format(path))
             if val_f1 > max_val_f1:
                 max_val_f1 = val_f1
-
         return path
 
     def _evaluate_acc_f1(self, data_loader):
@@ -211,14 +211,20 @@ class Instructor:
         # Loss and Optimizer
         criterion = nn.CrossEntropyLoss()
         _params = filter(lambda p: p.requires_grad, self.model.parameters())
-        optimizer = self.opt.optimizer(_params, lr=self.opt.learning_rate, weight_decay=self.opt.l2reg)
+        # optimizer = self.opt.optimizer(_params, lr=self.opt.learning_rate, weight_decay=self.opt.l2reg)
+        optimizer = self.opt.optimizer(params = _params, lr=self.opt.lr, weight_decay=0.01)
+        
+        # scheduler = transformers.get_cosine_schedule_with_warmup(optimizer, num_warmup_steps = 20,  num_training_steps)
 
         train_data_loader = DataLoader(dataset=self.trainset, batch_size=self.opt.batch_size, shuffle=True)
         test_data_loader = DataLoader(dataset=self.testset, batch_size=self.opt.batch_size, shuffle=False)
         val_data_loader = DataLoader(dataset=self.valset, batch_size=self.opt.batch_size, shuffle=False)
 
+        total_steps = len(train_data_loader) * self.opt.num_epoch
+        scheduler = transformers.get_linear_schedule_with_warmup(optimizer, num_warmup_steps=0, num_training_steps=total_steps)
+
         self._reset_params()
-        best_model_path = self._train(criterion, optimizer, train_data_loader, val_data_loader)
+        best_model_path = self._train(criterion, optimizer, scheduler, train_data_loader, val_data_loader)
         self.model.load_state_dict(torch.load(best_model_path))
         self.model.eval()
         test_acc, test_f1 = self._evaluate_acc_f1(test_data_loader)
@@ -230,19 +236,19 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--model_name', default='bert_spc', type=str)
     parser.add_argument('--dataset', default='laptop', type=str, help='twitter, restaurant, laptop')
-    parser.add_argument('--optimizer', default='adam', type=str)
+    parser.add_argument('--optimizer', default='adaw', type=str)
     parser.add_argument('--initializer', default='xavier_uniform_', type=str)
-    parser.add_argument('--learning_rate', default=2e-5, type=float, help='try 5e-5, 2e-5 for BERT, 1e-3 for others')
+    parser.add_argument('--lr', default=2e-5, type=float, help='try 5e-5, 2e-5 for BERT, 1e-3 for others')
     parser.add_argument('--dropout', default=0.1, type=float)
     parser.add_argument('--l2reg', default=0.01, type=float)
-    parser.add_argument('--num_epoch', default=10, type=int, help='try larger number for non-BERT models')
+    parser.add_argument('--num_epoch', default=20, type=int, help='try larger number for non-BERT models')
     parser.add_argument('--batch_size', default=16, type=int, help='try 16, 32, 64 for BERT models')
     parser.add_argument('--log_step', default=5, type=int)
     parser.add_argument('--embed_dim', default=300, type=int)
     parser.add_argument('--hidden_dim', default=300, type=int)
     parser.add_argument('--bert_dim', default=768, type=int)
     parser.add_argument('--pretrained_bert_name', default='bert-base-uncased', type=str)
-    parser.add_argument('--max_seq_len', default=80, type=int)
+    parser.add_argument('--max_seq_len', default=128, type=int)
     parser.add_argument('--polarities_dim', default=3, type=int)
     parser.add_argument('--hops', default=3, type=int)
     parser.add_argument('--device', default=None, type=str, help='e.g. cuda:0')
@@ -251,7 +257,7 @@ def main():
     # The following parameters are only valid for the lcf-bert model
     parser.add_argument('--local_context_focus', default='cdm', type=str, help='local context focus mode, cdw or cdm')
     parser.add_argument('--SRD', default=3, type=int, help='semantic-relative-distance, see the paper of LCF-BERT model')
-    parser.add_argument('--adv', default=1, type=float, help='adv pertube')
+    parser.add_argument('--adv', default=0, type=float, help='adv pertube')
     opt = parser.parse_args()
 
     if opt.seed is not None:
@@ -290,20 +296,44 @@ def main():
             'test': './datasets/acl-14-short-data/test.raw'
         },
         'restaurant': {
-            'train': './datasets/semeval14/Restaurants_Train.xml.seg',
-            'test': './datasets/semeval14/Restaurants_Test_Gold.xml.seg'
+            'train': './datasets/semeval14/restaurant.train',
+            'test': './datasets/semeval14/restaurant.test'
         },
-        'restaurant_random_rest': {
-            'train': './datasets/semeval14/Restaurants_Train.xml.seg',
-            'test': './datasets/semeval14/Restaurants_Test_Random_Rest.seg'
+        'restaurant_random_rest_test': {
+            'train': './datasets/semeval14/restaurant.train',
+            'test': './datasets/semeval14/restaurant_random_rest.test'
         },
-        'restaurant_random_laptop': {
-            'train': './datasets/semeval14/Restaurants_Train.xml.seg',
-            'test': './datasets/semeval14/Restaurants_Test_Random_Laptop.seg'
+        'restaurant_random_laptop_test': {
+            'train': './datasets/semeval14/restaurant.train',
+            'test': './datasets/semeval14/restaurant_random_laptop.test'
+        },
+        'restaurant_random_rest_train_gold_test': {
+            'train': './datasets/semeval14/restaurant_random_rest.train',
+            'test': './datasets/semeval14/restaurant.test'
+        },
+        'restaurant_random_laptop_train_gold_test': {
+            'train': './datasets/semeval14/restaurant_random_laptop.train',
+            'test': './datasets/semeval14/restaurant.test'
         },
         'laptop': {
-            'train': './datasets/semeval14/Laptops_Train.xml.seg',
-            'test': './datasets/semeval14/Laptops_Test_Gold.xml.seg'
+            'train': './datasets/semeval14/laptop.train',
+            'test': './datasets/semeval14/laptop.test'
+        },
+        'laptop_random_laptop_test': {
+            'train': './datasets/semeval14/laptop.train',
+            'test': './datasets/semeval14/laptop_random_laptop.test'
+        },
+        'laptop_random_rest_test': {
+            'train': './datasets/semeval14/laptop.train',
+            'test': './datasets/semeval14/laptop_random_rest.test'
+        },
+        'laptop_random_rest_train_gold_test': {
+            'train': './datasets/semeval14/laptop_random_rest.train',
+            'test': './datasets/semeval14/laptop.test'
+        },
+        'laptop_random_laptop_train_gold_test': {
+            'train': './datasets/semeval14/laptop_random_laptop.train',
+            'test': './datasets/semeval14/laptop.test'
         }
     }
     input_colses = {
@@ -336,6 +366,7 @@ def main():
         'asgd': torch.optim.ASGD,  # default lr=0.01
         'rmsprop': torch.optim.RMSprop,  # default lr=0.01
         'sgd': torch.optim.SGD,
+        'adaw': transformers.AdamW,  # 5e-5, 3e-5 or 2e-5
     }
     opt.model_class = model_classes[opt.model_name]
     opt.dataset_file = dataset_files[opt.dataset]

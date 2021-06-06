@@ -1,6 +1,8 @@
 # BERT_SPC
 ## restaurant
 test_acc: 0.8554, test_f1: 0.7862
+## restaurant_random_rest_cate
+test_acc: 0.8554, test_f1: 0.7862
 ## restaurant_random_rest
 test_acc: 0.8250, test_f1: 0.7357
 ## restaurant_random_laptop

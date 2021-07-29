@@ -46,10 +46,11 @@ python train.py --model_name bert_spc --dataset restaurant
 * Fine-tuning on the specific task is necessary for releasing the true power of BERT.
 
 
-## Open Framework PyABSA
-We recommend the easy-to-use (**train & inference**) and extensible [PyABSA](https://github.com/yangheng95/PyABSA) that integrates both **aspect term extraction** and **aspect sentiment classification** subtasks. 
-Except for providing BERT-based models, PyABSA **includes all the models in this repository** (thanks to all ABSA-PyTorch contributors). 
-Welcome to use and give your feedback!
+## Ready for PyABSA
+[PyABSA](https://github.com/yangheng95/PyABSA) is easy-to-use ABSA package which simplifies both training/inference procedures. 
+Except for providing BERT-based models, PyABSA **includes all the models in this repository** (thanks to all contributors). 
+
+Try [PyABSA](https://github.com/yangheng95/PyABSA) and free your time!
 
 ## Reviews / Surveys
 

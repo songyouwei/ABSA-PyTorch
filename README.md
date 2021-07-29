@@ -7,7 +7,7 @@
 ![LICENSE](https://img.shields.io/packagist/l/doctrine/orm.svg)
 [![Gitter](https://badges.gitter.im/ABSA-PyTorch/community.svg)](https://gitter.im/ABSA-PyTorch/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-10-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 ## Requirement
@@ -152,6 +152,7 @@ Thanks goes to these wonderful people:
   <tr>
     <td align="center"><a href="https://github.com/anayden"><img src="https://avatars0.githubusercontent.com/u/17383?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Alexey Naiden</b></sub></a><br /><a href="https://github.com/songyouwei/ABSA-PyTorch/commits?author=anayden" title="Code">💻</a></td>
     <td align="center"><a href="https://github.com/hbeybutyan"><img src="https://avatars.githubusercontent.com/u/16852864?v=4?s=100" width="100px;" alt=""/><br /><sub><b>hbeybutyan</b></sub></a><br /><a href="https://github.com/songyouwei/ABSA-PyTorch/commits?author=hbeybutyan" title="Code">💻</a></td>
+    <td align="center"><a href="https://prasys.info"><img src="https://avatars.githubusercontent.com/u/15159757?v=4?s=100" width="100px;" alt=""/><br /><sub><b>Pradeesh</b></sub></a><br /><a href="https://github.com/songyouwei/ABSA-PyTorch/commits?author=prasys" title="Code">💻</a></td>
   </tr>
 </table>
 

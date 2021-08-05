@@ -45,12 +45,8 @@ python train.py --model_name bert_spc --dataset restaurant
 * BERT-based models are more sensitive to hyperparameters (especially learning rate) on small data sets, see [this issue](https://github.com/songyouwei/ABSA-PyTorch/issues/27).
 * Fine-tuning on the specific task is necessary for releasing the true power of BERT.
 
-
-## Ready for PyABSA
-[PyABSA](https://github.com/yangheng95/PyABSA) is easy-to-use ABSA package which simplifies both training/inference procedures. 
-Except for providing BERT-based models, PyABSA **includes all the models in this repository** (thanks to all contributors). 
-
-Try [PyABSA](https://github.com/yangheng95/PyABSA) and free your time!
+### Framework
+For flexible training/inference and aspect term extraction, try [PyABSA](https://github.com/yangheng95/PyABSA), which includes all the models in this repository.
 
 ## Reviews / Surveys
 

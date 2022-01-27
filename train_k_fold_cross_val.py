@@ -80,8 +80,6 @@ class Instructor:
                         else:
                             stdv = 1. / math.sqrt(p.shape[0])
                             torch.nn.init.uniform_(p, a=-stdv, b=stdv)
-            else:
-                self.model.bert.load_state_dict(self.pretrained_bert_state_dict)
 
     def _train(self, criterion, optimizer, train_data_loader, val_data_loader):
         max_val_acc = 0
